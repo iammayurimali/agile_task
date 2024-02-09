@@ -3,6 +3,7 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import 'react-time-picker/dist/TimePicker.css';
+import { useEffect } from 'react';
 
 
 const LoginForm = ({setIsLoggedIn}) => {
@@ -14,6 +15,8 @@ const LoginForm = ({setIsLoggedIn}) => {
     })
 
     const[showPassword, setShowPassword] = useState(false);
+    const [accountType, setAccountType] = useState("emp");
+
 
     function changeHandler(event) {
 
@@ -25,6 +28,7 @@ const LoginForm = ({setIsLoggedIn}) => {
         ) )
 
     }
+    
 
     function submitHandler(event) {
         event.preventDefault();
@@ -34,10 +38,39 @@ const LoginForm = ({setIsLoggedIn}) => {
         console.log(formData)
         navigate("/Dashboard");
     }
+    const handleAccountTypeChange = (event) => {
+        setAccountType(event.target.value);
+        //console.log("Account: ", accountType)
+      };
+      useEffect(()=>{
+        localStorage.setItem('userType',JSON.stringify(accountType))
+      },[accountType])
 
   return (
     <form onSubmit={submitHandler}
     className="flex flex-col w-full gap-y-4 mt-6">
+           <div className="py-2 px-5 rounded-full transition-all duration-200 bg-gray-200">
+          <label
+            htmlFor="user"
+            className="py-2 px-5 rounded-full transition-all duration-200 text-gray-800"
+          >
+            Are you an employee or manager?
+          </label>
+
+          <select
+            id="user"
+            value={accountType}
+            onChange={handleAccountTypeChange}
+            className="border-none focus:outline-none"
+          >
+            <option value="emp" className="py-2 px-5">
+              Employee
+            </option>
+            <option value="man" className="py-2 px-5">
+              Manager
+            </option>
+          </select>
+        </div>
 
         <label className='w-full'>
             <p className='text-[0.875rem] text-richblack-5 mb-1 leading-[1.375rem]'>

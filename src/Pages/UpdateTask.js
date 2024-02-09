@@ -12,9 +12,10 @@ const UpdateTask = () => {
     tasksDone: '',
     startTime: '',
     endTime: '',
-    date: new Date()
+    date: new Date().toLocaleDateString()
    
   });
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,7 +52,7 @@ const UpdateTask = () => {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-4">Update your daily Task</h2>
+      <h2 className="flex justify-center text-2xl font-bold mb-4">Update your daily Task</h2>
       <form onSubmit={handleSubmit}>
         <div className="flex mb-4">
           <div className="mr-4">
@@ -80,6 +81,7 @@ const UpdateTask = () => {
               Date:
             </label>
             <DatePicker
+              required
               id="date"
               selected={formData.date}
               onChange={handleDateChange}
@@ -109,6 +111,7 @@ const UpdateTask = () => {
             Start time:
           </label>
           <TimePicker
+            required
             id="startTime"
             name="startTime"
             value={formData.startTime}
@@ -122,6 +125,7 @@ const UpdateTask = () => {
             End time:
           </label>
           <TimePicker
+            required
             id="endTime"
             name="endTime"
             value={formData.endTime}

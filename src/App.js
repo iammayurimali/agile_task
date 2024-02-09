@@ -31,7 +31,7 @@ function App() {
       {isLoggedIn && (
         <div className="flex">
           <Sidebar />
-          <div className="w-full max-w-xl mx-auto p-12 bg-white shadow-md rounded-md">
+          <div className="w-full max-w-xll mx-auto p-12 bg-white shadow-md rounded-md">
             <Routes>
               <Route path="/updatetask" element={<UpdateTask />} />
               <Route path="/completedtask" element={<CompletedTask />} />
