@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -47,11 +47,15 @@ const SignupForm = ({ setIsLoggedIn }) => {
 
     navigate("/dashboard");
   }
+ 
 
   const handleAccountTypeChange = (event) => {
     setAccountType(event.target.value);
     //console.log("Account: ", accountType)
   };
+  useEffect(()=>{
+    localStorage.setItem('userType',JSON.stringify(accountType))
+  },[accountType])
 
   return (
     <div>

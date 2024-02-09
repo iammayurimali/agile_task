@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import 'react-time-picker/dist/TimePicker.css';
 
 
 const LoginForm = ({setIsLoggedIn}) => {
@@ -52,7 +53,6 @@ const LoginForm = ({setIsLoggedIn}) => {
                 className='bg-richblack-800 rounded-[0.5rem] text-richblack-5 w-full p-[12px]'
             />
         </label>
-
         <label className='w-full relative'>
             <p className='text-[0.875rem] text-richblack-5 mb-1 leading-[1.375rem]'>
                 Password<sup className='text-pink-400'>*</sup>

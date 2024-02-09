@@ -4,7 +4,7 @@ export default function Navbar(props) {
     let isLoggedIn = props.isLoggedIn
     let setIsLoggedIn = props.setIsLoggedIn
   return (
-    <div className="flex justify-between items-center w-11/12 max-w-[1160px] py-4 mx-auto">
+    <div className="flex justify-between items-center w-11/12 max-w-[1160px] py-4 mx-auto ">
       <Link to="/"></Link>
 
       <nav className="text-richblack-100 flex items-center justify-between  p-4">
