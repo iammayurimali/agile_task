@@ -36,7 +36,7 @@ const LoginForm = ({setIsLoggedIn}) => {
         toast.success("Logged In");
         console.log("Printing the formData ");
         console.log(formData)
-        navigate("/Dashboard");
+        navigate("/addTaskHours");
     }
     const handleAccountTypeChange = (event) => {
         setAccountType(event.target.value);
@@ -120,6 +120,7 @@ const LoginForm = ({setIsLoggedIn}) => {
         <button className='bg-yellow-50 rounded-[8px] font-medium text-richblack-900 px-[12px] py-[8px] mt-6'>
             Sign In
         </button>
+      
 
     </form>
   )

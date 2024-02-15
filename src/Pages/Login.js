@@ -10,6 +10,7 @@ const Login = ({setIsLoggedIn}) => {
       desc2="Where tasks align and success begins"
       image={loginImg}
       formtype="login"
+      newUser = "Don't have account yet? Signup"
       setIsLoggedIn={setIsLoggedIn}
     />
   )

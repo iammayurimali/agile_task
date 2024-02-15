@@ -12,7 +12,7 @@ const Sider = () => {
             {selectedUser === "man" ? (
               <Link
                 to="/addproject"
-                className="block p-2 rounded hover:bg-gray-700"
+                className="block p-2  hover:bg-gray-700"
               >
                 Assign Project
               </Link>

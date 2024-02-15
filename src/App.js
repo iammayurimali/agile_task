@@ -1,24 +1,35 @@
-import { Route, Routes } from "react-router-dom";
-import Home from "./Pages/Home";
+import { Route, Routes,useNavigate } from "react-router-dom";
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 import "./App.css";
-import Navbar from "./Components/Navbar";
-import Dashboard from "./Pages/Dashboard";
+//import Dashboard from "./Pages/Dashboard";
 import { useState } from "react";
-import Sidebar from "./Components/Sidebar";
-import UpdateTask from "./Pages/UpdateTask";
-import CompletedTask from "./Pages/CompletedTask";
-import AddProject from "./Pages/AddProject";
+
+import AddTaskHours from "./Pages/AddTaskHours";
+import AssignProject from "./Pages/AssignProject";
+import ViewTimeSheet from "./Pages/ViewTimeSheet";
+import Sider from "./Components/Sider";
+import Header from "./Components/Header";
+import { useEffect } from "react";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // const navigate=useNavigate()
+  // useEffect(() => {
+  //   if (!isLoggedIn) {
+  //     navigate("/signup");
+  //   }
+  // }, [isLoggedIn, navigate]);
+
+console.log(isLoggedIn)
+
   return (
     <div className="App">
-      <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}></Navbar>
+      {/* <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}></Navbar> */}
+      {!isLoggedIn? (  
       <Routes>
-        <Route path="/" element={<Home />}></Route>
+        
         <Route
           path="/login"
           element={<Login setIsLoggedIn={setIsLoggedIn} />}
@@ -28,21 +39,19 @@ function App() {
           element={<Signup setIsLoggedIn={setIsLoggedIn} />}
         />
       </Routes>
-      {isLoggedIn && (
-        <div className="flex">
-          <Sidebar />
-          <div className="w-full max-w-xll mx-auto p-12 bg-white shadow-md rounded-md">
-            <Routes>
-              <Route path="/updatetask" element={<UpdateTask />} />
-              <Route path="/completedtask" element={<CompletedTask />} />
-              <Route path = "/addproject" element={<AddProject/>}/>
-              <Route
-                path="/dashboard"
-                element={<Dashboard isLoggedIn={isLoggedIn} />}
-              />
-            </Routes>
-          </div>
-        </div>
+      ):(
+    <div className="flex h-screen overflow-hidden">
+      <Sider></Sider>
+      
+      <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+        <Header></Header>
+        <Routes>
+          <Route path="/addTaskHours" element={<AddTaskHours />} />
+          <Route path="/assignProject" element={<AssignProject />} />
+          <Route path="/viewTimeSheet" element={<ViewTimeSheet />} />
+        </Routes>
+      </div>
+    </div>
       )}
     </div>
   );

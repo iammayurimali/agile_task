@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import toast from 'react-hot-toast'
 import { useEffect } from 'react';
@@ -32,12 +31,7 @@ const UpdateTask = () => {
     }));
   };
 
-  const handleTimeChange = (name, time) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: time,
-    }));
-  };
+
   useEffect(() => {
     localStorage.setItem('dataKey', JSON.stringify(formData));
   }, [formData]);
@@ -93,44 +87,18 @@ const UpdateTask = () => {
 
         <div className="mb-4">
           <label htmlFor="tasksDone" className="block text-sm font-semibold mb-2">
-            Tasks done:
+            Tasks Hours:
           </label>
-          <textarea
-            type="text"
+          <input
+            type="number"
             id="tasksDone"
             name="tasksDone"
+            max="10"
+            min="0"
             value={formData.tasksDone}
             onChange={handleChange}
-            className="w-full p-2 border rounded"
+            className="w-s p-2 border rounded"
             required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="startTime" className="block text-sm font-semibold mb-2">
-            Start time:
-          </label>
-          <TimePicker
-            required
-            id="startTime"
-            name="startTime"
-            value={formData.startTime}
-            onChange={(time) => handleTimeChange('startTime', time)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="endTime" className="block text-sm font-semibold mb-2">
-            End time:
-          </label>
-          <TimePicker
-            required
-            id="endTime"
-            name="endTime"
-            value={formData.endTime}
-            onChange={(time) => handleTimeChange('endTime', time)}
-            className="w-full p-2 border rounded"
           />
         </div>
         <button

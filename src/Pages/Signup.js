@@ -10,6 +10,7 @@ const Signup = ({setIsLoggedIn}) => {
       desc2="Sign up now and start shaping your success story."
       image={signupImg}
       formtype="signup"
+      newUser = "Already registered? Login"
       setIsLoggedIn={setIsLoggedIn}
     />
   )
