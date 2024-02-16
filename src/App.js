@@ -1,4 +1,4 @@
-import { Route, Routes,useNavigate } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 import "./App.css";
@@ -10,7 +10,6 @@ import AssignProject from "./Pages/AssignProject";
 import ViewTimeSheet from "./Pages/ViewTimeSheet";
 import Sider from "./Components/Sider";
 import Header from "./Components/Header";
-import { useEffect } from "react";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -29,7 +28,9 @@ console.log(isLoggedIn)
       {/* <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}></Navbar> */}
       {!isLoggedIn? (  
       <Routes>
-        
+        <Route path = "/"
+        element={<Login setIsLoggedIn={setIsLoggedIn} />}
+        />
         <Route
           path="/login"
           element={<Login setIsLoggedIn={setIsLoggedIn} />}

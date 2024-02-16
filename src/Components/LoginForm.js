@@ -36,7 +36,7 @@ const LoginForm = ({setIsLoggedIn}) => {
         toast.success("Logged In");
         console.log("Printing the formData ");
         console.log(formData)
-        navigate("/addTaskHours");
+        accountType === "man"? navigate("/assignProject"): navigate("/addTaskHours")
     }
     const handleAccountTypeChange = (event) => {
         setAccountType(event.target.value);

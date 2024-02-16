@@ -6,48 +6,48 @@ export default function AssignProject() {
   }
   return (
     <div>
-      <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
-        <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 class="text-title-md2 font-bold text-black dark:text-white">
+      <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-title-md2 font-bold text-black dark:text-white">
             Assign Project
           </h2>
         </div>
         {/* Form */}
-        <div class="flex justify-center items-start">
-          <div class="w-full max-w-md">
-            <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-              <div class="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
-                <h3 class="font-medium text-black dark:text-white">
+        <div className="flex justify-center items-start">
+          <div className="w-full max-w-md">
+            <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+              <div className="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
+                <h3 className="font-medium text-black dark:text-white">
                   Project Assign Form
                 </h3>
               </div>
               <form action="#">
-                <div class="p-6.5">
-                  <div class="mb-4.5">
-                    <label class="mb-3 block text-sm font-medium text-black dark:text-white">
+                <div className="p-6.5">
+                  <div className="mb-4.5">
+                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                       Project
                     </label>
                     <div
                       x-data="{ isOptionSelected: false }"
-                      class="relative z-20 bg-transparent dark:bg-form-input"
+                      className="relative z-20 bg-transparent dark:bg-form-input"
                     >
-                      <select class="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary">
-                        <option value="" class="text-body">
+                      <select className="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary">
+                        <option value="" className="text-body">
                           Select Project
                         </option>
-                        <option value="" class="text-body">
+                        <option value="" className="text-body">
                           RH
                         </option>
-                        <option value="" class="text-body">
+                        <option value="" className="text-body">
                           Project B
                         </option>
-                        <option value="" class="text-body">
+                        <option value="" className="text-body">
                           Project C
                         </option>
                       </select>
-                      <span class="absolute right-4 top-1/2 z-30 -translate-y-1/2">
+                      <span className="absolute right-4 top-1/2 z-30 -translate-y-1/2">
                         <svg
-                          class="fill-current"
+                          className="fill-current"
                           width="24"
                           height="24"
                           viewBox="0 0 24 24"
@@ -66,31 +66,31 @@ export default function AssignProject() {
                       </span>
                     </div>
                   </div>
-                  <div class="mb-4.5">
-                    <label class="mb-3 block text-sm font-medium text-black dark:text-white">
+                  <div className="mb-4.5">
+                    <label className="mb-3 block text-sm font-medium text-black dark:text-white">
                       Developer
                     </label>
                     <div
                       x-data="{ isOptionSelected: false }"
-                      class="relative z-20 bg-transparent dark:bg-form-input"
+                      className="relative z-20 bg-transparent dark:bg-form-input"
                     >
-                      <select class="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary">
-                        <option value="" class="text-body">
+                      <select className="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary">
+                        <option value="" className="text-body">
                           Select Developer
                         </option>
-                        <option value="" class="text-body">
+                        <option value="" className="text-body">
                           Abhishek
                         </option>
-                        <option value="" class="text-body">
+                        <option value="" className="text-body">
                           Ravina
                         </option>
-                        <option value="" class="text-body">
+                        <option value="" className="text-body">
                           Akanksha
                         </option>
                       </select>
-                      <span class="absolute right-4 top-1/2 z-30 -translate-y-1/2">
+                      <span className="absolute right-4 top-1/2 z-30 -translate-y-1/2">
                         <svg
-                          class="fill-current"
+                          className="fill-current"
                           width="24"
                           height="24"
                           viewBox="0 0 24 24"
@@ -110,7 +110,7 @@ export default function AssignProject() {
                     </div>
                   </div>
 
-                  <button class="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+                  <button className="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
                   onClick={assignProjectHandler}>
                     Submit
                   </button>
