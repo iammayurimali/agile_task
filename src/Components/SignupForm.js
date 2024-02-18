@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { toast } from "react-hot-toast";
+import { useMutation } from "@apollo/client";
+
 import { useNavigate } from "react-router-dom";
+import { SIGNUP } from "../GraphQl/Mutation";
 
 const SignupForm = ({ setIsLoggedIn }) => {
   const navigate = useNavigate();
+  const [signup, { loading }] = useMutation(SIGNUP);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -14,9 +18,10 @@ const SignupForm = ({ setIsLoggedIn }) => {
     confirmPassword: "",
   });
 
+  const [accountType, setAccountType] = useState("Developer");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [accountType, setAccountType] = useState("emp");
+
   function changeHandler(event) {
     setFormData((prevData) => ({
       ...prevData,
@@ -30,58 +35,39 @@ const SignupForm = ({ setIsLoggedIn }) => {
       toast.error("Passwords do not match");
       return;
     }
-
-    setIsLoggedIn(true);
-    toast.success("Account Created");
-    const accountData = {
-      ...formData,
-    };
-
-    const finalData = {
-      ...accountData,
-      accountType,
-    };
-
-    console.log("printing Final account data ");
-    console.log(finalData);
-
-    navigate("/dashboard");
+    signup({
+      variables: {
+        firstname: formData.firstName,
+        lastname: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        accountType: accountType,
+      },
+    })
+      //setIsLoggedIn(true);
+      .then((response) => {
+        // Handle successful signup
+        toast.success("Account Created");
+        console.log("Signup Response:", response);
+        navigate("/login");
+      })
+      .catch((error) => {
+        // Handle signup error
+        console.error("Signup Error:", error);
+        toast.error("Error creating account. Please try again.");
+      });
   }
- 
 
   const handleAccountTypeChange = (event) => {
     setAccountType(event.target.value);
     //console.log("Account: ", accountType)
   };
-  useEffect(()=>{
-    localStorage.setItem('userType',JSON.stringify(accountType))
-  },[accountType])
 
   return (
     <div>
       {/* student-Instructor tab */}
       <div className="flex bg-richblack-800 p-1 gap-x-1 my-6 rounded-full max-w-max">
-        {/* <button
-          className={`${
-            accountType === "employee"
-              ? "bg-richblack-900 text-richblack-5"
-              : "bg-transparent text-richblack-200"
-          } py-2 px-5 rounded-full transition-all duration-200`}
-          onClick={() => setAccountType("employee")}
-        >
-          Employee
-        </button>
-
-        <button
-          className={`${
-            accountType === "manager"
-              ? "bg-richblack-900 text-richblack-5"
-              : "bg-transparent text-richblack-200"
-          } py-2 px-5 rounded-full transition-all duration-200`}
-          onClick={() => setAccountType("manager")}
-        >
-          Manager
-        </button> */}
         <div className="py-2 px-5 rounded-full transition-all duration-200 bg-gray-200">
           <label
             htmlFor="user"
@@ -96,16 +82,16 @@ const SignupForm = ({ setIsLoggedIn }) => {
             onChange={handleAccountTypeChange}
             className="border-none focus:outline-none"
           >
-            <option value="emp" className="py-2 px-5">
-              Employee
+            <option value="Developer" className="py-2 px-5">
+              Developer
             </option>
-            <option value="man" className="py-2 px-5">
+            <option value="Manager" className="py-2 px-5">
               Manager
             </option>
           </select>
         </div>
       </div>
-        
+
       <form onSubmit={submitHandler}>
         {/* first name and lastName */}
         <div className="flex gap-x-4 mt-[20px]">
@@ -209,8 +195,11 @@ const SignupForm = ({ setIsLoggedIn }) => {
             </span>
           </label>
         </div>
-        <button className=" w-full bg-yellow-50 rounded-[8px] font-medium text-richblack-900 px-[12px] py-[8px] mt-6">
-          Create Account
+        <button
+          className="w-full bg-yellow-50 rounded-[8px] font-medium text-richblack-900 px-[12px] py-[8px] mt-6"
+          disabled={loading} // Disable the button during loading
+        >
+          {loading ? "Creating Account..." : "Create Account"}
         </button>
       </form>
     </div>

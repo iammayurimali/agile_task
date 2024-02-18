@@ -1,5 +1,8 @@
 import React from "react";
 import { useState } from "react";
+import {getAssignedProject} from "../GraphQl/Query"
+import { useQuery } from "@apollo/client";
+import { useEffect } from "react";
 
 export default function AddTaskHours() {
   const [projects, setProjects] = useState([
@@ -14,18 +17,23 @@ export default function AddTaskHours() {
       friday: 8,
       saturday: 0
     },
-    {
-      id: 2,
-      name: "P2",
-      sunday: 0,
-      monday: 2,
-      tuesday: 3,
-      wednesday: 4,
-      thursday: 5,
-      friday: 6,
-      saturday:0
-    },
+
   ]);
+  const userid = JSON.parse(localStorage.getItem("userID"))
+  //console.log(id)
+  const {  data , error,loading} = useQuery(getAssignedProject, {
+    variables: { getAssignedProjectId: userid},
+  });
+ 
+  useEffect(() => {
+    if (data && data.getAssignedProject) {
+     // console.log("Project Name:", data.getAssignedProject.projectName);
+    }
+  }, [data]);  
+ 
+
+  console.log("Data",data)
+  console.log("Project Name:", getAssignedProject.projectName);
   const handleDayChange = (projectId, day, value) => {
     setProjects((prevProjects) => {
       return prevProjects.map((project) =>

@@ -1,8 +1,48 @@
 import React from "react";
+import { gql, useQuery, useMutation } from "@apollo/client";
+import { getAllDevelopers } from "../GraphQl/Query";
+import {ASSIGNPROJECT} from "../GraphQl/Mutation"
+import {useState} from "react"
+import toast from "react-hot-toast";
+
+//import {GET_DEVELOPERS} from "../GraphQl/Query"
 
 export default function AssignProject() {
-  function assignProjectHandler(e){
-    e.preventDefault()
+  const { loading, error, data } = useQuery(getAllDevelopers);
+
+  const [selectedProject, setSelectedProject] = useState("");
+  const [selectedDeveloper, setSelectedDeveloper] = useState("");
+
+  const [assignproject,{ loading: mutationLoading, error: mutationError }] = useMutation(ASSIGNPROJECT)
+
+  if (loading) return <p>loading</p>;
+  if (error) return <p>ERROR</p>;
+  if (!data) return <p>Not found</p>;
+
+  function assignProjectHandler(e) {
+    e.preventDefault();
+    if (selectedProject && selectedDeveloper) {
+      assignproject({
+        variables: {
+          developerId: selectedDeveloper,
+          assignedproject: selectedProject,
+        },
+      })
+     //console.log("Selected Data:",selectedDeveloper,selectedProject)
+        .then((response) => {
+          // Handle the response, update state or perform any other actions
+          console.log("AssignProject response:", response);
+          toast.success("Project Assigned Successfully")
+        })
+        .catch((error) => {
+          // Handle the error
+          console.error("Mutation error:", error);
+          toast.error("Project Already Assigned")
+        });
+    } else {
+      // Handle the case when either project or developer is not selected
+      console.log("Please select both project and developer");
+    }
   }
   return (
     <div>
@@ -31,18 +71,21 @@ export default function AssignProject() {
                       x-data="{ isOptionSelected: false }"
                       className="relative z-20 bg-transparent dark:bg-form-input"
                     >
-                      <select className="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary">
-                        <option value="" className="text-body">
+                      <select
+                      value={selectedProject}
+                      onChange={(e) => setSelectedProject(e.target.value)}
+                       className="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary">
+                        <option  className="text-body">
                           Select Project
                         </option>
-                        <option value="" className="text-body">
+                        <option value="RH" className="text-body">
                           RH
                         </option>
-                        <option value="" className="text-body">
-                          Project B
+                        <option value="Project A" className="text-body">
+                          Project A
                         </option>
-                        <option value="" className="text-body">
-                          Project C
+                        <option value="Project B" className="text-body">
+                          Project B
                         </option>
                       </select>
                       <span className="absolute right-4 top-1/2 z-30 -translate-y-1/2">
@@ -74,19 +117,22 @@ export default function AssignProject() {
                       x-data="{ isOptionSelected: false }"
                       className="relative z-20 bg-transparent dark:bg-form-input"
                     >
-                      <select className="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary">
-                        <option value="" className="text-body">
+                      <select 
+                      value={selectedDeveloper}
+                      onChange={(e) => setSelectedDeveloper(e.target.value)}
+                      className="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary">
+                         <option  className="text-body">
                           Select Developer
                         </option>
-                        <option value="" className="text-body">
-                          Abhishek
-                        </option>
-                        <option value="" className="text-body">
-                          Ravina
-                        </option>
-                        <option value="" className="text-body">
-                          Akanksha
-                        </option>
+                        {data?.getAllDevelopers?.map((developer) => (
+                          <option
+                            key={developer.id}
+                            value={developer.id}
+                            className="text-body"
+                          >
+                            {developer.firstname} {developer.lastname}
+                          </option>
+                        ))}
                       </select>
                       <span className="absolute right-4 top-1/2 z-30 -translate-y-1/2">
                         <svg
@@ -110,10 +156,13 @@ export default function AssignProject() {
                     </div>
                   </div>
 
-                  <button className="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
-                  onClick={assignProjectHandler}>
-                    Submit
+                  <button
+                    className="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
+                    onClick={assignProjectHandler}
+                  >
+                   {mutationLoading ? "Submitting..." : "Submit"}
                   </button>
+                  {mutationError && <p>Error: {mutationError.message}</p>}
                 </div>
               </form>
             </div>

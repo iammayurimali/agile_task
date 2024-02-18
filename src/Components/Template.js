@@ -2,7 +2,6 @@ import React from "react";
 import frameImage from "../assets/frame.png";
 import SignupForm from "./SignupForm";
 import LoginForm from "./LoginForm";
-import { FcGoogle } from "react-icons/fc";
 import { Link } from 'react-router-dom';
 
 const Template = ({

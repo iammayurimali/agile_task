@@ -3,49 +3,65 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import 'react-time-picker/dist/TimePicker.css';
-import { useEffect } from 'react';
+import {LOGIN} from "../GraphQl/Mutation"
+import { useMutation } from "@apollo/client";
 
 
 const LoginForm = ({setIsLoggedIn}) => {
+  const navigate = useNavigate();
+  const [login] = useMutation(LOGIN);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [accountType, setAccountType] = useState("Developer");
 
-    const navigate = useNavigate();
+  function changeHandler(event) {
+    setFormData((prevData) => ({
+      ...prevData,
+      [event.target.name]: event.target.value,
+    }));
+  }
 
-    const [formData, setFormData] = useState( {
-        email:"", password:""
+  function submitHandler(event) {
+    event.preventDefault();
+    login({
+      variables: {
+        email: formData.email,
+        password: formData.password,
+        accountType,
+      },
     })
-
-    const[showPassword, setShowPassword] = useState(false);
-    const [accountType, setAccountType] = useState("emp");
-
-
-    function changeHandler(event) {
-
-        setFormData( (prevData) =>(
-            {
-                ...prevData,
-                [event.target.name]:event.target.value
-            }
-        ) )
-
-    }
-    
-
-    function submitHandler(event) {
-        event.preventDefault();
-        setIsLoggedIn(true);
+      .then((response) => {
+        // Handle successful login
+        console.log("Login Response:", response)
+        const { token,id } = response.data.login;
         toast.success("Logged In");
-        console.log("Printing the formData ");
-        console.log(formData)
-        accountType === "man"? navigate("/assignProject"): navigate("/addTaskHours")
-    }
-    const handleAccountTypeChange = (event) => {
-        setAccountType(event.target.value);
-        //console.log("Account: ", accountType)
-      };
-      useEffect(()=>{
-        localStorage.setItem('userType',JSON.stringify(accountType))
-      },[accountType])
+       // console.log("token:",token)
+       localStorage.setItem("userID", JSON.stringify(id))
+        localStorage.setItem('accountType', JSON.stringify(accountType));
 
+        localStorage.setItem("token", JSON.stringify(token));
+        setIsLoggedIn(true);
+
+        // Assuming the redirect logic based on the account type is still needed
+        accountType === "Manager"
+          ? navigate("/assignProject")
+          : navigate("/addTaskHours");
+      })
+      .catch((error) => {
+        // Handle login error
+        console.error("Login Error:", error);
+        toast.error("Invalid credentials. Please try again.");
+      });
+  }
+
+  const handleAccountTypeChange = (event) => {
+    setAccountType(event.target.value);
+  };
+
+   
   return (
     <form onSubmit={submitHandler}
     className="flex flex-col w-full gap-y-4 mt-6">
@@ -63,10 +79,10 @@ const LoginForm = ({setIsLoggedIn}) => {
             onChange={handleAccountTypeChange}
             className="border-none focus:outline-none"
           >
-            <option value="emp" className="py-2 px-5">
-              Employee
+            <option value="Developer" className="py-2 px-5">
+              Developer
             </option>
-            <option value="man" className="py-2 px-5">
+            <option value="Manager" className="py-2 px-5">
               Manager
             </option>
           </select>
