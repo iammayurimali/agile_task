@@ -27,35 +27,63 @@ export const SIGNUP = gql`
     }
   }
 `;
-  export const LOGIN = gql`
-  mutation login($email:String, $password:String, $accountType:String){
+export const LOGIN = gql`
+  mutation login($email: String, $password: String, $accountType: String) {
     login(
-        loginData:{
-            email: $email
-            password:$password
-            accountType:$accountType
-        }
-    ){
-        id
-        accountType
-        token
-        firstname
-        lastname
-        email
+      loginData: {
+        email: $email
+        password: $password
+        accountType: $accountType
+      }
+    ) {
+      id
+      accountType
+      token
+      firstname
+      lastname
+      email
     }
   }
-`
+`;
 
 export const ASSIGNPROJECT = gql`
-mutation assignProject($developerId: ID!, $assignedproject: String){
-  assignProject(
-    assignproject:{
-      developerId: $developerId
-      assignedproject: $assignedproject
+  mutation assignProject($developerId: ID!, $assignedproject: String) {
+    assignProject(
+      assignproject: {
+        developerId: $developerId
+        assignedproject: $assignedproject
       }
-  ){
+    ) {
       id
-     projectName
+      projectName
+    }
   }
-}
-`
+`;
+export const ADDTASKHOURS = gql`
+  mutation AddTaskHours(
+    $userId: ID!
+    $idHoursData: [idHours]!
+    $startdate: String!
+    $enddate: String!
+  ) {
+    addTaskHours(
+      taskHoursData: {
+        userId: $userId
+        idHoursData: $idHoursData
+        startdate: $startdate
+        enddate: $enddate
+      }
+    ) {
+      startdate
+      enddate
+      projectTaskHoursDetails {
+        assignProjectId
+        taskHours {
+          date
+          day
+          hours
+        }
+      }
+    }
+  }
+`;

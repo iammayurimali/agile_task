@@ -42,10 +42,10 @@ console.log(isLoggedIn)
       </Routes>
       ):(
     <div className="flex h-screen overflow-hidden">
-      <Sider></Sider>
+      <Sider setIsLoggedIn={setIsLoggedIn}></Sider>
       
       <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-        <Header></Header>
+        <Header setIsLoggedIn={setIsLoggedIn}></Header>
         <Routes>
           <Route path="/addTaskHours" element={<AddTaskHours />} />
           <Route path="/assignProject" element={<AssignProject />} />

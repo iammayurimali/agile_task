@@ -14,7 +14,7 @@ export const getAssignedProject = gql`
 query GetAssignedProject($getAssignedProjectId: ID!) {
   getAssignedProject(id: $getAssignedProjectId) {
     projectName
-   
+   id
   }
 }
 `;

@@ -4,7 +4,7 @@ import { CiViewTimeline } from "react-icons/ci";
 import { Link } from "react-router-dom";
 import { SiTask } from "react-icons/si";
 
-export default function Sider() {
+export default function Sider({setIsLoggedIn}) {
   const selectedUser = JSON.parse(localStorage.getItem("accountType")) || [];
 
   return (
