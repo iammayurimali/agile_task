@@ -87,3 +87,25 @@ export const ADDTASKHOURS = gql`
     }
   }
 `;
+
+export const UPDATETASKHOUR = gql`
+  mutation editAddedTask($userId: ID!, $idHoursData: [idHours]!) {
+    editAddedTask(
+      updateTaskData: {
+        userId: $userId
+        idHoursData: $idHoursData
+      }
+    ) {
+      startdate
+    enddate
+    projectTaskHoursDetails {
+      assignProjectId
+      taskHours {
+        date
+        day
+        hours
+      }
+    }
+    }
+  }
+`;

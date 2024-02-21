@@ -2,9 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { getAssignedProject } from "../GraphQl/Query";
 import { ADDTASKHOURS } from "../GraphQl/Mutation";
+import {UPDATETASKHOUR} from "../GraphQl/Mutation"
 
 export default function AddTaskHours() {
   const [addTaskHours] = useMutation(ADDTASKHOURS);
+  const [editAddedTask] = useMutation(UPDATETASKHOUR)
+
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   const [projects, setProjects] = useState([]);
@@ -89,13 +92,40 @@ export default function AddTaskHours() {
     );
   };
 
-  const handleDayChange = (projectId, dayIndex, value) => {
+  const handleDayChange = async (projectId, dayIndex, value) => {
     setTaskHours((prevTaskHours) => {
       const newTaskHours = [...prevTaskHours];
-      newTaskHours[projectId][dayIndex] = value;
+      newTaskHours[projectId][dayIndex] =parseFloat(value);
+  
+      try {
+        const formattedTaskHours = projects.map((project, projectIndex) => ({
+          assignProjectId: project.id,
+          hoursTaskData: newTaskHours[projectIndex].map((hours, index) => ({
+            date: getFormattedDate(index),
+            day: days[index],
+            hours: hours,
+          })),
+        }));
+  
+        editAddedTask({
+          variables: {
+            userId: JSON.parse(localStorage.getItem("userID")),
+            idHoursData: formattedTaskHours,
+          },
+        });
+  
+        console.log("Task hours updated successfully!");
+      } catch (error) {
+        console.error("Error updating task hours:", error.message);
+        // handle errors as needed
+      }
+  
       return newTaskHours;
     });
   };
+  
+  
+  
 
   return (
     <div>
