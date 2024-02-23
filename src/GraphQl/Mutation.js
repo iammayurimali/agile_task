@@ -96,16 +96,12 @@ export const UPDATETASKHOUR = gql`
         idHoursData: $idHoursData
       }
     ) {
-      startdate
-    enddate
-    projectTaskHoursDetails {
-      assignProjectId
-      taskHours {
-        date
-        day
-        hours
-      }
+    assignProjectId
+    taskHours {
+      date
+      day
+      hours
     }
-    }
+  }
   }
 `;
