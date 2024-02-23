@@ -65,7 +65,6 @@ export default function AddTaskHours() {
       const updatedProjects = data.getAssignedProject.map((project) => {
         const projectTaskHours = project.addTaskHours[0]?.projectTaskHoursDetails[0]?.taskHours;
         
-        // Check if taskHours data is available, if not, set hours to zero for each day
         const taskHours = projectTaskHours ? projectTaskHours.map(hour => hour.hours) : Array(7).fill(0);
   
         return {
