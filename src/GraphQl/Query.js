@@ -16,37 +16,34 @@ query GetAssignedProject($getAssignedProjectId: ID!) {
     id
     projectName
     addTaskHours {
-      projectTaskHoursDetails {
-        taskHours {
-          date
-          day
-          hours
-        }
-      }
+      comments
+      date
+      day
+      hours
     }
   }
 }
 `;
 
-export const GET_INITIAL_TASK_HOURS = gql`
-  query GetInitialTaskHours($getUserByIdId: ID!) {
-    getUserByID(id: $getUserByIdId) {
-      id
-      assignProject {
-        addTaskHours {
-          projectTaskHoursDetails {
-            assignProjectId
-            taskHours {
-              date
-              day
-              hours
-            }
-          }
-        }
-      }
-    }
-  }
-`;
+// export const GET_INITIAL_TASK_HOURS = gql`
+//   query GetInitialTaskHours($getUserByIdId: ID!) {
+//     getUserByID(id: $getUserByIdId) {
+//       id
+//       assignProject {
+//         addTaskHours {
+//           projectTaskHoursDetails {
+//             assignProjectId
+//             taskHours {
+//               date
+//               day
+//               hours
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
+// `;
 
 export const getUser = gql`
 {
@@ -62,17 +59,11 @@ export const getUser = gql`
     assignProject {
       projectName
       addTaskHours {
-        enddate
-        startdate
-        projectTaskHoursDetails {
-          assignProjectId
-          taskHours {
-            date
-            day
-            hours
-          }
-        }
-      }
+      comments
+      date
+      day
+      hours
+    }
     }
   }
 }

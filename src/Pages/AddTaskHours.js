@@ -2,15 +2,32 @@ import React, { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { getAssignedProject } from "../GraphQl/Query";
 import { ADDTASKHOURS } from "../GraphQl/Mutation";
-import { GET_INITIAL_TASK_HOURS } from "../GraphQl/Query";
 //import { getUser } from "../GraphQl/Query";
+import Modal from "react-modal";
 import { UPDATETASKHOUR } from "../GraphQl/Mutation";
 import toast from "react-hot-toast";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
+Modal.setAppElement("#root");
 export default function AddTaskHours() {
   const [addTaskHours] = useMutation(ADDTASKHOURS);
   const [editAddedTask] = useMutation(UPDATETASKHOUR);
- 
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString());
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState("");
+  const [hours, setHours] = useState(0); //modal hours
+  const [comments, setComments] = useState("");
+  const [invalidHours, setInvalidHours] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [taskHours, setTaskHours] = useState([]); //table hours
+  const [totalWeekHours, setTotalWeekHours] = useState(0);
+
+  const userid = JSON.parse(localStorage.getItem("userID"));
+  const { data } = useQuery(getAssignedProject, {
+    variables: { getAssignedProjectId: userid },
+  });
+
   const days = [
     "Sunday",
     "Monday",
@@ -21,66 +38,21 @@ export default function AddTaskHours() {
     "Saturday",
   ];
 
-  const [projects, setProjects] = useState([]);
-  const [taskHours, setTaskHours] = useState([]);
-  const [totalWeekHours, setTotalWeekHours] = useState(0);
-
-  const handleSave = async () => {
-    const startDate = getFormattedDate(0);
-    const endDate = getFormattedDate(6);
-
-    try {
-      const formattedTaskHours = projects.map((project, projectIndex) => ({
-        assignProjectId: project.id,
-        hoursTaskData: taskHours[projectIndex].map((hours, dayIndex) => ({
-          date: getFormattedDate(dayIndex),
-          day: days[dayIndex],
-          hours: hours,
-        })),
-      }));
-
-      const { data } = await addTaskHours({
-        variables: {
-          userId: JSON.parse(localStorage.getItem("userID")),
-          startdate: startDate,
-          enddate: endDate,
-          idHoursData: formattedTaskHours,
-        },
-      });
-      toast.success("Saved Successfully");
-      console.log("Task hours added successfully!", data);
-    } catch (error) {
-      console.error("Error adding task hours:", error.message);
-      // handle errors as needed
-    }
-  };
-
-  const userid = JSON.parse(localStorage.getItem("userID"));
-  const { data } = useQuery(getAssignedProject, {
-    variables: { getAssignedProjectId: userid },
-  });
-
   useEffect(() => {
     if (data && data.getAssignedProject) {
-      const updatedProjects = data.getAssignedProject.map((project) => {
-        const projectTaskHours = project.addTaskHours[0]?.projectTaskHoursDetails[0]?.taskHours;
-        
-        const taskHours = projectTaskHours ? projectTaskHours.map(hour => hour.hours) : Array(7).fill(0);
-  
-        return {
-          id: project.id,
-          name: project.projectName,
-          taskHours: taskHours,
-        };
-      });
-  
+      const updatedProjects = data.getAssignedProject.map((project) => ({
+        id: project.id,
+        name: project.projectName,
+      }));
       setProjects(updatedProjects);
-  
-      const initialTaskHours = updatedProjects.map(project => project.taskHours);
+
+      // Initialize taskHours state based on the number of projects and days
+      const initialTaskHours = Array.from({ length: updatedProjects.length }, () =>
+        Array.from({ length: 7 }, () => 0)
+      );
       setTaskHours(initialTaskHours);
     }
   }, [data]);
-  
 
   useEffect(() => {
     const totalHours = taskHours.reduce(
@@ -122,32 +94,35 @@ export default function AddTaskHours() {
     setTaskHours((prevTaskHours) => {
       const newTaskHours = [...prevTaskHours];
       newTaskHours[projectId][dayIndex] = parseFloat(value);
-
-      try {
-        const formattedTaskHours = projects.map((project, projectIndex) => ({
-          assignProjectId: project.id,
-          hoursTaskData: newTaskHours[projectIndex].map((hours, index) => ({
-            date: getFormattedDate(index),
-            day: days[index],
-            hours: hours,
-          })),
-        }));
-
-        editAddedTask({
-          variables: {
-            userId: JSON.parse(localStorage.getItem("userID")),
-            idHoursData: formattedTaskHours,
-          },
-        });
-
-        console.log("Task hours updated successfully!");
-      } catch (error) {
-        console.error("Error updating task hours:", error.message);
-        // handle errors as needed
-      }
-
       return newTaskHours;
     });
+  };
+
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleSaveModal = () => {
+    console.log("date:", selectedDate);
+    if (!hours || !comments || !selectedProject) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    closeModal();
+    toast.success("Task hours added successfully");
+  };
+
+  const handleHoursChange = (value) => {
+    const parsedValue = parseFloat(value);
+    if (!isNaN(parsedValue) && parsedValue >= 0 && parsedValue <= 12) {
+      setHours(parsedValue);
+    } else {
+      toast.error("Please enter a valid value between 0 and 12.");
+    }
   };
 
   return (
@@ -158,9 +133,125 @@ export default function AddTaskHours() {
             Time Sheet
           </h2>
         </div>
+        {/* Add TaskHours Button */}
+        <button
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          style={{ float: "right" }}
+          onClick={openModal}
+        >
+          Add Task Hours
+        </button>
 
+        <Modal
+          isOpen={isModalOpen}
+          onRequestClose={closeModal}
+          contentLabel="Add Task Hours Modal"
+          style={{
+            content: {
+              width: "500px",
+              height: "500px",
+              margin: "auto",
+              overflow: "auto",
+              boxShadow: "2xl",
+            },
+            overlay: {
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            },
+          }}
+        >
+          <div className="bg-white p-8 rounded-lg shadow-md">
+            <h2 className="text-2xl font-bold mb-4">Add Task Hours</h2>
+            <div className="flex mb-4">
+              {/* Date input field */}
+              <div className="flex flex-col mr-4">
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Date
+                </label>
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date) => setSelectedDate(date)}
+                  disabled
+                  className="w-48 p-2 border rounded"
+                />
+              </div>
+              {/* Hours input field */}
+              <div className="flex flex-col">
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Hours<span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="12"
+                  value={hours}
+                  onChange={(e) => handleHoursChange(e.target.value)}
+                  className={`w-48 p-2 border rounded ${
+                    invalidHours ? "border-red-500" : ""
+                  }`}
+                  required
+                />
+              </div>
+            </div>
+            {/* Project dropdown */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Project<span className="text-red-500">*</span>
+              </label>
+              <select
+                className="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                value={selectedProject}
+                onChange={(e) => setSelectedProject(e.target.value)}
+                required
+              >
+                <option>Select Project</option>
+                {projects.map((project) => (
+                  <option key={project.id} id = {project.id} value={project.name}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {/* Comments input field */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Comments<span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={comments}
+                onChange={(e) => setComments(e.target.value)}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            {/* Validation message */}
+
+            {/* Buttons */}
+            <div className="flex justify-end">
+              <button
+                onClick={handleSaveModal}
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
+              >
+                Save Task Hours
+              </button>
+              <button
+                onClick={closeModal}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-600 font-bold py-2 px-4 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* First Table(Main Table) */}
         <div className="container mx-auto mt-8">
-          <table className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200">
+          <table
+            className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200"
+            style={{ marginTop: "80px" }}
+          >
             <thead>{renderHeader()}</thead>
             <tbody>
               {projects.map((project, projectIndex) => (
@@ -178,7 +269,7 @@ export default function AddTaskHours() {
                         className="w-full text-center"
                         type="number"
                         min="0"
-                        max="10"
+                        max="12"
                         value={value}
                         onChange={(e) =>
                           handleDayChange(
@@ -217,12 +308,47 @@ export default function AddTaskHours() {
         </div>
         <div style={{ marginBottom: "20px" }} />
 
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          onClick={handleSave}
-        >
-          Save Task Hours
-        </button>
+        {/* Project Name and select date*/}
+        <div className="flex gap-4 mb-4">
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-500 mb-1">
+              Project
+            </span>
+            <select className="border p-2 rounded">
+              <option value="" disabled selected>
+                Select Project
+              </option>
+              {projects.map((project) => (
+                <option key={project.id} id = {project.id}value={project.name}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-500 mb-1">Date</span>
+            <DatePicker
+              selected={selectedDate}
+              onChange={(date) => setSelectedDate(date)}
+              className="border p-2 rounded"
+              
+            />
+          </div>
+        </div>
+
+        {/* Second Table */}
+        <div className="flex items-center justify-center">
+          <table className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200">
+            <thead>
+              <tr className="bg-blue-700 text-white">
+                <th>Date</th>
+                <th>Hours</th>
+                <th>Comments</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
       </div>
     </div>
   );

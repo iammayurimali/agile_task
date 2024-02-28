@@ -1,6 +1,6 @@
 import { FaCircleUser } from "react-icons/fa6";
 import { MdKeyboardArrowDown } from "react-icons/md";
-import { useState, useRef, useEffect } from 'react'; // Import useRef and useEffect hooks if not already imported
+import { useState, useRef, useEffect } from 'react'; 
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
@@ -60,7 +60,6 @@ export default function Header({setIsLoggedIn}) {
                 >
                   Logout
                 </button>
-                {/* Add more options as needed */}
               </div>
             )}
           </div>

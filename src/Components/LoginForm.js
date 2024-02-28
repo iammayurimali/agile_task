@@ -34,7 +34,6 @@ const LoginForm = ({setIsLoggedIn}) => {
       },
     })
       .then((response) => {
-        // Handle successful login
         console.log("Login Response:", response)
         const { token,id } = response.data.login;
         toast.success("Logged In");
@@ -45,13 +44,11 @@ const LoginForm = ({setIsLoggedIn}) => {
         localStorage.setItem("token", JSON.stringify(token));
         setIsLoggedIn(true);
 
-        // Assuming the redirect logic based on the account type is still needed
         accountType === "Manager"
           ? navigate("/assignProject")
           : navigate("/addTaskHours");
       })
       .catch((error) => {
-        // Handle login error
         console.error("Login Error:", error);
         toast.error("Invalid credentials. Please try again.");
       });

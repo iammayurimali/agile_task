@@ -14,13 +14,6 @@ import Header from "./Components/Header";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // const navigate=useNavigate()
-  // useEffect(() => {
-  //   if (!isLoggedIn) {
-  //     navigate("/signup");
-  //   }
-  // }, [isLoggedIn, navigate]);
-
 console.log(isLoggedIn)
 
   return (

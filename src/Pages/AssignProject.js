@@ -30,17 +30,14 @@ export default function AssignProject() {
       })
      //console.log("Selected Data:",selectedDeveloper,selectedProject)
         .then((response) => {
-          // Handle the response, update state or perform any other actions
           console.log("AssignProject response:", response);
           toast.success("Project Assigned Successfully")
         })
         .catch((error) => {
-          // Handle the error
           console.error("Mutation error:", error);
           toast.error("Project Already Assigned")
         });
     } else {
-      // Handle the case when either project or developer is not selected
       console.log("Please select both project and developer");
     }
   }
@@ -52,7 +49,6 @@ export default function AssignProject() {
             Assign Project
           </h2>
         </div>
-        {/* Form */}
         <div className="flex justify-center items-start">
           <div className="w-full max-w-md">
             <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">

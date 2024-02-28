@@ -54,54 +54,61 @@ export const ASSIGNPROJECT = gql`
         assignedproject: $assignedproject
       }
     ) {
-      id
       projectName
     }
   }
 `;
+
 export const ADDTASKHOURS = gql`
   mutation AddTaskHours(
     $userId: ID!
-    $idHoursData: [idHours]!
-    $startdate: String!
-    $enddate: String!
+    $assignProjectId: ID!
+    $comments: String!
+    $date: String!
+    $day: String!
+    $hours: float!
   ) {
     addTaskHours(
       taskHoursData: {
         userId: $userId
-        idHoursData: $idHoursData
-        startdate: $startdate
-        enddate: $enddate
+        assignProjectId: $assignProjectId
+        comments: $comments
+        date: $date
+        day: $day
+        hours: $hours
       }
     ) {
-      startdate
-      enddate
-      projectTaskHoursDetails {
-        assignProjectId
-        taskHours {
-          date
-          day
-          hours
-        }
-      }
+      date
+      day
+      hours
+      comments
     }
   }
 `;
 
 export const UPDATETASKHOUR = gql`
-  mutation editAddedTask($userId: ID!, $idHoursData: [idHours]!) {
+  mutation editAddedTask(
+    $userId: ID!
+    $assignProjectId: ID!
+    $comments: String!
+    $date: String!
+    $day: String!
+    $hours: float!
+  ) {
     editAddedTask(
       updateTaskData: {
         userId: $userId
-        idHoursData: $idHoursData
+        assignProjectId: $assignProjectId
+        comments: $comments
+        date: $date
+        day: $day
+        hours: $hours
       }
     ) {
-    assignProjectId
-    taskHours {
       date
       day
       hours
+      comments
     }
-  }
   }
 `;

@@ -7,6 +7,9 @@ import { useNavigate } from "react-router-dom";
 import { SIGNUP } from "../GraphQl/Mutation";
 
 const SignupForm = ({ setIsLoggedIn }) => {
+  const isValidName = (name) => /^[A-Za-z]+$/.test(name);
+  const isValidEmail = (email) => /^[a-z0-9.!#$%&'*@+=?^_`{|}~-]+$/.test(email)
+
   const navigate = useNavigate();
   const [signup, { loading }] = useMutation(SIGNUP);
 
@@ -23,10 +26,29 @@ const SignupForm = ({ setIsLoggedIn }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   function changeHandler(event) {
-    setFormData((prevData) => ({
-      ...prevData,
-      [event.target.name]: event.target.value,
-    }));
+    const { name, value } = event.target;
+
+    if (name === "firstName" && !isValidName(value)) {
+      console.error("Invalid first name. Use alphabets only.");
+      return;
+    }
+
+    if (name === "lastName" && !isValidName(value)) {
+      console.error("Invalid last name. Use alphabets only.");
+      return;
+    }
+
+    if (name === "email" && !isValidEmail(value)) {
+      console.error("Invalid email name. Use alphabets only.");
+      return;
+    }
+
+      setFormData((prevData) => ({
+        ...prevData,
+        [event.target.name]: event.target.value,
+      }));
+    
+   
   }
 
   function submitHandler(event) {
@@ -45,15 +67,12 @@ const SignupForm = ({ setIsLoggedIn }) => {
         accountType: accountType,
       },
     })
-      //setIsLoggedIn(true);
       .then((response) => {
-        // Handle successful signup
         toast.success("Account Created");
         console.log("Signup Response:", response);
         navigate("/login");
       })
       .catch((error) => {
-        // Handle signup error
         console.error("Signup Error:", error);
         toast.error("Error creating account. Please try again.");
       });
@@ -66,7 +85,6 @@ const SignupForm = ({ setIsLoggedIn }) => {
 
   return (
     <div>
-      {/* student-Instructor tab */}
       <div className="flex bg-richblack-800 p-1 gap-x-1 my-6 rounded-full max-w-max">
         <div className="py-2 px-5 rounded-full transition-all duration-200 bg-gray-200">
           <label
@@ -197,7 +215,7 @@ const SignupForm = ({ setIsLoggedIn }) => {
         </div>
         <button
           className="w-full bg-yellow-50 rounded-[8px] font-medium text-richblack-900 px-[12px] py-[8px] mt-6"
-          disabled={loading} // Disable the button during loading
+          disabled={loading}
         >
           {loading ? "Creating Account..." : "Create Account"}
         </button>
