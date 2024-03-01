@@ -10,6 +10,7 @@ import AssignProject from "./Pages/AssignProject";
 import ViewTimeSheet from "./Pages/ViewTimeSheet";
 import Sider from "./Components/Sider";
 import Header from "./Components/Header";
+import { Navigate } from "react-router-dom";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -21,6 +22,7 @@ console.log(isLoggedIn)
       {/* <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn}></Navbar> */}
       {!isLoggedIn? (  
       <Routes>
+        <Route path="*" element={<Navigate to="/login" />} />
         <Route path = "/"
         element={<Login setIsLoggedIn={setIsLoggedIn} />}
         />
@@ -43,6 +45,7 @@ console.log(isLoggedIn)
           <Route path="/addTaskHours" element={<AddTaskHours />} />
           <Route path="/assignProject" element={<AssignProject />} />
           <Route path="/viewTimeSheet" element={<ViewTimeSheet />} />
+          
         </Routes>
       </div>
     </div>

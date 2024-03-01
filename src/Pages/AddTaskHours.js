@@ -11,9 +11,9 @@ import "react-datepicker/dist/react-datepicker.css";
 
 Modal.setAppElement("#root");
 export default function AddTaskHours() {
-  const [addTaskHours] = useMutation(ADDTASKHOURS);
-  const [editAddedTask] = useMutation(UPDATETASKHOUR);
-  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString());
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toLocaleDateString()
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState("");
   const [hours, setHours] = useState(0); //modal hours
@@ -22,6 +22,11 @@ export default function AddTaskHours() {
   const [projects, setProjects] = useState([]);
   const [taskHours, setTaskHours] = useState([]); //table hours
   const [totalWeekHours, setTotalWeekHours] = useState(0);
+  const [selectedProjectDetails, setSelectedProjectDetails] = useState([]);
+  const [addTaskHoursMutation] = useMutation(ADDTASKHOURS);
+  const [selectedModalProject, setSelectedModalProject] = useState("");
+  const [selectedStartDate, setSelectedStartDate] = useState(new Date());
+  const [selectedEndDate, setSelectedEndDate] = useState(new Date());
 
   const userid = JSON.parse(localStorage.getItem("userID"));
   const { data } = useQuery(getAssignedProject, {
@@ -46,10 +51,25 @@ export default function AddTaskHours() {
       }));
       setProjects(updatedProjects);
 
-      // Initialize taskHours state based on the number of projects and days
-      const initialTaskHours = Array.from({ length: updatedProjects.length }, () =>
-        Array.from({ length: 7 }, () => 0)
+      const initialTaskHours = Array.from(
+        { length: updatedProjects.length },
+        () => Array.from({ length: 7 }, () => 0)
       );
+
+      data.getAssignedProject.forEach((project) => {
+        project.addTaskHours.forEach((taskHour) => {
+          const dayIndex = new Date(taskHour.date).getDay();
+          //console.log("Index",dayIndex)
+          const projectIndex = updatedProjects.findIndex(
+            (p) => p.id === project.id
+          );
+
+          if (projectIndex !== -1 && dayIndex !== -1) {
+            initialTaskHours[projectIndex][dayIndex] = taskHour.hours;
+          }
+        });
+      });
+
       setTaskHours(initialTaskHours);
     }
   }, [data]);
@@ -91,13 +111,21 @@ export default function AddTaskHours() {
   };
 
   const handleDayChange = async (projectId, dayIndex, value) => {
-    setTaskHours((prevTaskHours) => {
-      const newTaskHours = [...prevTaskHours];
-      newTaskHours[projectId][dayIndex] = parseFloat(value);
-      return newTaskHours;
-    });
+    const newTaskHours = [...taskHours];
+    newTaskHours[projectId][dayIndex] = parseFloat(value);
+  
+    const totalHoursForDay = newTaskHours.reduce(
+      (acc, projectHours) => acc + projectHours[dayIndex],
+      0
+    );
+  
+    if (totalHoursForDay <= 24) {
+      setTaskHours(newTaskHours);
+    } else {
+      toast.error("Total hours for the day cannot exceed 24.");
+    }
   };
-
+  
   const openModal = () => {
     setIsModalOpen(true);
   };
@@ -106,14 +134,36 @@ export default function AddTaskHours() {
     setIsModalOpen(false);
   };
 
-  const handleSaveModal = () => {
+  const handleSaveModal = async () => {
     console.log("date:", selectedDate);
-    if (!hours || !comments || !selectedProject) {
+    if (!hours || !comments || !selectedModalProject) {
       toast.error("Please fill all required fields");
       return;
     }
-    closeModal();
-    toast.success("Task hours added successfully");
+    try {
+      const result = await addTaskHoursMutation({
+        variables: {
+          userId: userid,
+          assignProjectId: selectedModalProject,
+          comments: comments,
+          date: selectedDate,
+          day: days[new Date(selectedDate).getDay()],
+          hours: parseFloat(hours),
+        },
+      });
+
+      console.log("Task hours added successfully", result);
+
+      closeModal();
+      toast.success("Task hours added successfully");
+    } catch (error) {
+      console.error("Error adding task hours", error);
+      toast.error("Project Task Already added");
+    }
+    setIsModalOpen(false);
+    setSelectedModalProject("");
+    setHours(0);
+    setComments("");
   };
 
   const handleHoursChange = (value) => {
@@ -122,6 +172,46 @@ export default function AddTaskHours() {
       setHours(parsedValue);
     } else {
       toast.error("Please enter a valid value between 0 and 12.");
+    }
+  };
+
+const handleProjectSelectChange = (value) => {
+  setSelectedProject(value);
+
+  const selectedProjectData = data.getAssignedProject.find(
+    (project) => project.projectName === value
+  );
+
+  const filteredTaskHours = selectedProjectData
+    ? selectedProjectData.addTaskHours.filter((task) => {
+        const taskDate = new Date(task.date);
+        const startDate = new Date(selectedStartDate);
+        const endDate = new Date(selectedEndDate);
+        taskDate.setHours(0, 0, 0, 0);
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+        return taskDate >= startDate && taskDate <= endDate;
+      })
+    : [];
+      console.log("Final task data:", filteredTaskHours)
+  setSelectedProjectDetails(filteredTaskHours);
+};
+
+
+  const handleStartDateChange = (date) => {
+    if(date <= new Date()){
+      setSelectedStartDate(date);
+    } else {
+      toast.error("Start date cannot be greater than today's date");
+    }
+   
+  };
+
+  const handleEndDateChange = (date) => {
+    if (date <= new Date()) {
+      setSelectedEndDate(date);
+    } else {
+      toast.error("End date cannot be greater than today's date");
     }
   };
 
@@ -202,13 +292,14 @@ export default function AddTaskHours() {
               </label>
               <select
                 className="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                value={selectedProject}
-                onChange={(e) => setSelectedProject(e.target.value)}
+                value={selectedModalProject}
+                onChange={(e) => setSelectedModalProject(e.target.value)}
                 required
+                id="modalprojects"
               >
                 <option>Select Project</option>
                 {projects.map((project) => (
-                  <option key={project.id} id = {project.id} value={project.name}>
+                  <option key={project.id} value={project.id}>
                     {project.name}
                   </option>
                 ))}
@@ -308,18 +399,22 @@ export default function AddTaskHours() {
         </div>
         <div style={{ marginBottom: "20px" }} />
 
-        {/* Project Name and select date*/}
+        {/* Project Name and select start/end date*/}
         <div className="flex gap-4 mb-4">
           <div className="flex flex-col">
             <span className="text-sm font-medium text-gray-500 mb-1">
               Project
             </span>
-            <select className="border p-2 rounded">
-              <option value="" disabled selected>
+            <select
+              className="border p-2 rounded"
+              value={selectedProject}
+              onChange={(e) => handleProjectSelectChange(e.target.value)}
+            >
+              <option value="" disabled>
                 Select Project
               </option>
               {projects.map((project) => (
-                <option key={project.id} id = {project.id}value={project.name}>
+                <option key={project.id} value={project.name}>
                   {project.name}
                 </option>
               ))}
@@ -327,27 +422,62 @@ export default function AddTaskHours() {
           </div>
 
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-gray-500 mb-1">Date</span>
+            <span className="text-sm font-medium text-gray-500 mb-1">
+              Start Date
+            </span>
             <DatePicker
-              selected={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
+              selected={new Date(selectedStartDate)}
+              onChange={(date) => handleStartDateChange(date)}
               className="border p-2 rounded"
-              
+            />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-500 mb-1">
+              End Date
+            </span>
+            <DatePicker
+              selected={new Date(selectedEndDate)}
+              onChange={(date) => handleEndDateChange(date)}
+              minDate={new Date(selectedStartDate)}
+              className="border p-2 rounded"
             />
           </div>
         </div>
 
         {/* Second Table */}
         <div className="flex items-center justify-center">
-          <table className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200">
-            <thead>
-              <tr className="bg-blue-700 text-white">
-                <th>Date</th>
-                <th>Hours</th>
-                <th>Comments</th>
-              </tr>
-            </thead>
-          </table>
+          {selectedProject ? (
+            <table className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200">
+              <thead>
+                <tr className="bg-blue-700 text-white">
+                  <th>Date</th>
+                  <th>Hours</th>
+                  <th>Comments</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedProjectDetails.length > 0 ? (
+                  selectedProjectDetails.map((task, index) => (
+                    <tr key={index}>
+                      <td className="text-center">{task.date}</td>
+                      <td className="text-center">{task.hours}</td>
+                      <td className="text-center">{task.comments}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="text-center">
+                      No task hours found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-center text-gray-500 mt-4">
+              Please select a project to view completed time sheet.
+            </p>
+          )}
         </div>
       </div>
     </div>

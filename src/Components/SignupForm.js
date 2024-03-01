@@ -9,6 +9,8 @@ import { SIGNUP } from "../GraphQl/Mutation";
 const SignupForm = ({ setIsLoggedIn }) => {
   const isValidName = (name) => /^[A-Za-z]+$/.test(name);
   const isValidEmail = (email) => /^[a-z0-9.!#$%&'*@+=?^_`{|}~-]+$/.test(email)
+  //const isValidEmail = (email) => /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@gmail\.com$/.test(email);
+
 
   const navigate = useNavigate();
   const [signup, { loading }] = useMutation(SIGNUP);

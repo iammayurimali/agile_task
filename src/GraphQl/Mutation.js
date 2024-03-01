@@ -66,7 +66,7 @@ export const ADDTASKHOURS = gql`
     $comments: String!
     $date: String!
     $day: String!
-    $hours: float!
+    $hours: Float!
   ) {
     addTaskHours(
       taskHoursData: {
@@ -78,6 +78,7 @@ export const ADDTASKHOURS = gql`
         hours: $hours
       }
     ) {
+      id
       date
       day
       hours
