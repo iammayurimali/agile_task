@@ -13,7 +13,7 @@ Modal.setAppElement("#root");
 export default function AddTaskHours() {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toLocaleDateString()
-  );
+  ); 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState("");
   const [hours, setHours] = useState(0); //modal hours
@@ -56,16 +56,20 @@ export default function AddTaskHours() {
         () => Array.from({ length: 7 }, () => 0)
       );
 
+      const today = new Date();
+      const currentWeekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
+      const currentWeekEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (6 - today.getDay()));
+      
       data.getAssignedProject.forEach((project) => {
         project.addTaskHours.forEach((taskHour) => {
-          const dayIndex = new Date(taskHour.date).getDay();
-          //console.log("Index",dayIndex)
-          const projectIndex = updatedProjects.findIndex(
-            (p) => p.id === project.id
-          );
-
-          if (projectIndex !== -1 && dayIndex !== -1) {
-            initialTaskHours[projectIndex][dayIndex] = taskHour.hours;
+          const taskDate = new Date(taskHour.date);
+          if (taskDate >= currentWeekStart && taskDate <= currentWeekEnd) {
+            const dayIndex = taskDate.getDay();
+            const projectIndex = updatedProjects.findIndex((p) => p.id === project.id);
+      
+            if (projectIndex !== -1 && dayIndex !== -1) {
+              initialTaskHours[projectIndex][dayIndex] = taskHour.hours;
+            }
           }
         });
       });
@@ -215,6 +219,10 @@ const handleProjectSelectChange = (value) => {
     }
   };
 
+  const filterDates = (date) => {
+    const currentMonth = new Date().getMonth();
+    return date.getMonth() === currentMonth;
+  };
   return (
     <div>
       <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
@@ -428,6 +436,7 @@ const handleProjectSelectChange = (value) => {
             <DatePicker
               selected={new Date(selectedStartDate)}
               onChange={(date) => handleStartDateChange(date)}
+              filterDate={filterDates}
               className="border p-2 rounded"
             />
           </div>
@@ -438,6 +447,7 @@ const handleProjectSelectChange = (value) => {
             <DatePicker
               selected={new Date(selectedEndDate)}
               onChange={(date) => handleEndDateChange(date)}
+              filterDate={filterDates}
               minDate={new Date(selectedStartDate)}
               className="border p-2 rounded"
             />
