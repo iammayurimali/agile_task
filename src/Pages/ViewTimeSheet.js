@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@apollo/client";
 import { getAssignedProject } from "../GraphQl/Query";
-import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select"; // Import react-select
+import { CiSearch } from "react-icons/ci";
+
 
 export default function ViewTimeSheet() {
   const [projects, setProjects] = useState([]);
@@ -17,6 +18,7 @@ export default function ViewTimeSheet() {
   const { data, loading, error } = useQuery(getAssignedProject, {
     variables: { getAssignedProjectId: userid },
   });
+  
   useEffect(() => {
     if (data && data.getAssignedProject) {
       const projectData = data.getAssignedProject;
@@ -128,15 +130,20 @@ export default function ViewTimeSheet() {
             <span className="text-sm font-medium text-gray-500 mb-1">
               Search
             </span>
+            <div className="relative w-100">
+      
             <input
               type="text"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               className="border p-2 rounded w-100"
-              placeholder="Enter text to search"
+              placeholder={`Search comments...`}
             />
+            <CiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2" />
+            </div>
           </div>
         </div>
+        
         {/* Table displaying selected project details */}
         <div className="flex items-center justify-center h-400px overflow-y: auto">
           {selectedProjects.length > 0 ? (

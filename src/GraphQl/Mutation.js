@@ -94,7 +94,7 @@ export const UPDATETASKHOUR = gql`
     $comments: String!
     $date: String!
     $day: String!
-    $hours: float!
+    $hours: Float!
   ) {
     editAddedTask(
       updateTaskData: {
@@ -106,6 +106,32 @@ export const UPDATETASKHOUR = gql`
         hours: $hours
       }
     ) {
+      date
+      day
+      hours
+      comments
+    }
+  }
+`;
+
+export const DELETETASKHOUR = gql`
+  mutation deleteTaskData(
+    $assignProjectId: ID!
+    $comments: String!
+    $date: String!
+    $day: String!
+    $hours: Float!
+  ) {
+    deleteTaskData(
+      deletedata: {
+        assignProjectId: $assignProjectId
+        comments: $comments
+        date: $date
+        day: $day
+        hours: $hours
+      }
+    ) {
+      id
       date
       day
       hours

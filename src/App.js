@@ -8,6 +8,7 @@ import { useState } from "react";
 import AddTaskHours from "./Pages/AddTaskHours";
 import AssignProject from "./Pages/AssignProject";
 import ViewTimeSheet from "./Pages/ViewTimeSheet";
+import ViewDeveloperTimeSheet from "./Pages/ViewDeveloperTimeSheet";
 import Sider from "./Components/Sider";
 import Header from "./Components/Header";
 import { Navigate } from "react-router-dom";
@@ -45,7 +46,7 @@ console.log(isLoggedIn)
           <Route path="/addTaskHours" element={<AddTaskHours />} />
           <Route path="/assignProject" element={<AssignProject />} />
           <Route path="/viewTimeSheet" element={<ViewTimeSheet />} />
-          
+          <Route path = "/viewDeveloperTimeSheet" element={<ViewDeveloperTimeSheet/>}/>
         </Routes>
       </div>
     </div>

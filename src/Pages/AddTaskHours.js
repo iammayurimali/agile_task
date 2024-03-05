@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { getAssignedProject } from "../GraphQl/Query";
 import { ADDTASKHOURS } from "../GraphQl/Mutation";
-//import { getUser } from "../GraphQl/Query";
-import Modal from "react-modal";
 import { UPDATETASKHOUR } from "../GraphQl/Mutation";
+import { DELETETASKHOUR } from "../GraphQl/Mutation";
+import Modal from "react-modal";
 import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -13,25 +13,58 @@ Modal.setAppElement("#root");
 export default function AddTaskHours() {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toLocaleDateString()
-  ); 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedProject, setSelectedProject] = useState("");
+  ); // modal date
   const [hours, setHours] = useState(0); //modal hours
   const [comments, setComments] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedModalProject, setSelectedModalProject] = useState("");
+  const [filteredTaskHours, setFilteredTaskHours] = useState([]);
+  const [updateTaskHoursMutation] = useMutation(UPDATETASKHOUR);
+  const [deleteTaskHourMutation] = useMutation(DELETETASKHOUR);
+
+
+  const [selectedProject, setSelectedProject] = useState("");
   const [invalidHours, setInvalidHours] = useState(false);
   const [projects, setProjects] = useState([]);
   const [taskHours, setTaskHours] = useState([]); //table hours
   const [totalWeekHours, setTotalWeekHours] = useState(0);
   const [selectedProjectDetails, setSelectedProjectDetails] = useState([]);
   const [addTaskHoursMutation] = useMutation(ADDTASKHOURS);
-  const [selectedModalProject, setSelectedModalProject] = useState("");
   const [selectedStartDate, setSelectedStartDate] = useState(new Date());
   const [selectedEndDate, setSelectedEndDate] = useState(new Date());
 
   const userid = JSON.parse(localStorage.getItem("userID"));
+
   const { data } = useQuery(getAssignedProject, {
     variables: { getAssignedProjectId: userid },
   });
+
+  useEffect(() => {
+    if (data && data.getAssignedProject) {
+      const selectedProjectData = data.getAssignedProject.find(
+        (project) => project.id === selectedModalProject
+      );
+      console.log("Selected Project:", selectedProjectData);
+      const filteredTaskHours = selectedProjectData
+        ? selectedProjectData.addTaskHours.filter((task) => {
+            const taskDate = new Date(task.date);
+            const modalDate = new Date(selectedDate);
+            return taskDate.getTime() === modalDate.getTime();
+          })
+        : [];
+      setFilteredTaskHours(filteredTaskHours);
+      if (filteredTaskHours.length > 0) {
+        const [task] = filteredTaskHours;
+        setComments(task.comments);
+        setHours(task.hours);
+      } else {
+        setComments("");
+        setHours(0);
+      }
+    }
+  }, [data, selectedModalProject, selectedDate]);
+
+  const isTaskExists = filteredTaskHours.length > 0;
 
   const days = [
     "Sunday",
@@ -57,16 +90,26 @@ export default function AddTaskHours() {
       );
 
       const today = new Date();
-      const currentWeekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
-      const currentWeekEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (6 - today.getDay()));
-      
+      const currentWeekStart = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() - today.getDay()
+      );
+      const currentWeekEnd = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + (6 - today.getDay())
+      );
+
       data.getAssignedProject.forEach((project) => {
         project.addTaskHours.forEach((taskHour) => {
           const taskDate = new Date(taskHour.date);
           if (taskDate >= currentWeekStart && taskDate <= currentWeekEnd) {
             const dayIndex = taskDate.getDay();
-            const projectIndex = updatedProjects.findIndex((p) => p.id === project.id);
-      
+            const projectIndex = updatedProjects.findIndex(
+              (p) => p.id === project.id
+            );
+
             if (projectIndex !== -1 && dayIndex !== -1) {
               initialTaskHours[projectIndex][dayIndex] = taskHour.hours;
             }
@@ -116,20 +159,27 @@ export default function AddTaskHours() {
 
   const handleDayChange = async (projectId, dayIndex, value) => {
     const newTaskHours = [...taskHours];
+    const oldValue = newTaskHours[projectId][dayIndex];
+
+    if (oldValue === 0 && parseFloat(value) > 0) {
+      toast.error("Please Add Task Hours before updating.");
+      return;
+    }
+
     newTaskHours[projectId][dayIndex] = parseFloat(value);
-  
+
     const totalHoursForDay = newTaskHours.reduce(
       (acc, projectHours) => acc + projectHours[dayIndex],
       0
     );
-  
+
     if (totalHoursForDay <= 24) {
       setTaskHours(newTaskHours);
     } else {
       toast.error("Total hours for the day cannot exceed 24.");
     }
   };
-  
+
   const openModal = () => {
     setIsModalOpen(true);
   };
@@ -139,11 +189,18 @@ export default function AddTaskHours() {
   };
 
   const handleSaveModal = async () => {
-    console.log("date:", selectedDate);
+    //console.log("date:", selectedDate);
+
     if (!hours || !comments || !selectedModalProject) {
       toast.error("Please fill all required fields");
       return;
     }
+
+    if (comments.length < 10) {
+      toast.error("Please enter at least 10 characters in the Comments field");
+      return;
+    }
+
     try {
       const result = await addTaskHoursMutation({
         variables: {
@@ -156,14 +213,14 @@ export default function AddTaskHours() {
         },
       });
 
-      console.log("Task hours added successfully", result);
-
       closeModal();
       toast.success("Task hours added successfully");
     } catch (error) {
       console.error("Error adding task hours", error);
       toast.error("Project Task Already added");
     }
+
+    // Resetting states
     setIsModalOpen(false);
     setSelectedModalProject("");
     setHours(0);
@@ -179,36 +236,34 @@ export default function AddTaskHours() {
     }
   };
 
-const handleProjectSelectChange = (value) => {
-  setSelectedProject(value);
+  const handleProjectSelectChange = (value) => {
+    setSelectedProject(value);
 
-  const selectedProjectData = data.getAssignedProject.find(
-    (project) => project.projectName === value
-  );
+    const selectedProjectData = data.getAssignedProject.find(
+      (project) => project.projectName === value
+    );
 
-  const filteredTaskHours = selectedProjectData
-    ? selectedProjectData.addTaskHours.filter((task) => {
-        const taskDate = new Date(task.date);
-        const startDate = new Date(selectedStartDate);
-        const endDate = new Date(selectedEndDate);
-        taskDate.setHours(0, 0, 0, 0);
-        startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(0, 0, 0, 0);
-        return taskDate >= startDate && taskDate <= endDate;
-      })
-    : [];
-      console.log("Final task data:", filteredTaskHours)
-  setSelectedProjectDetails(filteredTaskHours);
-};
-
+    const filteredTaskHours = selectedProjectData
+      ? selectedProjectData.addTaskHours.filter((task) => {
+          const taskDate = new Date(task.date);
+          const startDate = new Date(selectedStartDate);
+          const endDate = new Date(selectedEndDate);
+          taskDate.setHours(0, 0, 0, 0);
+          startDate.setHours(0, 0, 0, 0);
+          endDate.setHours(0, 0, 0, 0);
+          return taskDate >= startDate && taskDate <= endDate;
+        })
+      : [];
+    console.log("Final task data:", filteredTaskHours);
+    setSelectedProjectDetails(filteredTaskHours);
+  };
 
   const handleStartDateChange = (date) => {
-    if(date <= new Date()){
+    if (date <= new Date()) {
       setSelectedStartDate(date);
     } else {
       toast.error("Start date cannot be greater than today's date");
     }
-   
   };
 
   const handleEndDateChange = (date) => {
@@ -223,6 +278,61 @@ const handleProjectSelectChange = (value) => {
     const currentMonth = new Date().getMonth();
     return date.getMonth() === currentMonth;
   };
+
+  const handleUpdateModal = async () => {
+    if (comments.length < 10) {
+      toast.error("Please enter atleast 10 characters in the comment field");
+      return;
+    }
+    try {
+      const result = await updateTaskHoursMutation({
+        variables: {
+          userId: userid,
+          assignProjectId: selectedModalProject,
+          comments: comments,
+          date: selectedDate,
+          day: days[new Date(selectedDate).getDay()],
+          hours: hours,
+        },
+      });
+      closeModal();
+      toast.success("Task hours updated successfully");
+    } catch (error) {
+      console.error("Error updating task hours", error);
+      toast.error("Error updating task hours");
+    }
+
+    // Resetting states
+    setIsModalOpen(false);
+    setSelectedModalProject("");
+    setHours(0);
+    setComments("");
+  };
+
+  const handleDeleteModal = async ()=>{
+    try {
+      const result = await deleteTaskHourMutation({
+        variables: {
+          assignProjectId: selectedModalProject,
+          comments: comments,
+          date: selectedDate,
+          day: days[new Date(selectedDate).getDay()],
+          hours: hours,
+        },
+      });
+      closeModal();
+      toast.success("Task hours deleted successfully");
+    } catch (error) {
+      console.error("Error deleting task hours", error);
+      toast.error("Error deleting task hours");
+    }
+    // Resetting states
+    setIsModalOpen(false);
+    setSelectedModalProject("");
+    setHours(0);
+    setComments("");
+  }
+  
   return (
     <div>
       <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
@@ -322,6 +432,7 @@ const handleProjectSelectChange = (value) => {
                 value={comments}
                 onChange={(e) => setComments(e.target.value)}
                 className="w-full p-2 border rounded"
+                minLength="10"
                 required
               />
             </div>
@@ -329,12 +440,29 @@ const handleProjectSelectChange = (value) => {
 
             {/* Buttons */}
             <div className="flex justify-end">
-              <button
-                onClick={handleSaveModal}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
-              >
-                Save Task Hours
-              </button>
+              {isTaskExists ? (
+                <>
+                <button
+                  onClick={handleUpdateModal}
+                  className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mr-2"
+                >
+                  Update 
+                </button>
+                <button
+                  onClick={handleDeleteModal}
+                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2"
+                >
+                  Delete 
+                </button>
+                </>
+              ) : (
+                <button
+                  onClick={handleSaveModal}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
+                >
+                  Save Task Hours
+                </button>
+              )}
               <button
                 onClick={closeModal}
                 className="bg-gray-300 hover:bg-gray-400 text-gray-600 font-bold py-2 px-4 rounded"
