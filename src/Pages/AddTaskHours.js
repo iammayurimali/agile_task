@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { getAssignedProject } from "../GraphQl/Query";
-import { ADDTASKHOURS } from "../GraphQl/Mutation";
-import { UPDATETASKHOUR } from "../GraphQl/Mutation";
-import { DELETETASKHOUR } from "../GraphQl/Mutation";
+import {ADDTASKHOURS, UPDATETASKHOUR, DELETETASKHOUR} from "../GraphQl/Mutation";
 import Modal from "react-modal";
 import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { MdDelete } from "react-icons/md";
+import { MdSecurityUpdateGood } from "react-icons/md";
+import { IoIosSave } from "react-icons/io";
+import { FaRegEdit } from "react-icons/fa";
 
 Modal.setAppElement("#root");
 export default function AddTaskHours() {
@@ -19,9 +21,8 @@ export default function AddTaskHours() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedModalProject, setSelectedModalProject] = useState("");
   const [filteredTaskHours, setFilteredTaskHours] = useState([]);
-  const [updateTaskHoursMutation] = useMutation(UPDATETASKHOUR);
+  const [updateTaskHoursMutation] = useMutation(UPDATETASKHOUR)
   const [deleteTaskHourMutation] = useMutation(DELETETASKHOUR);
-
 
   const [selectedProject, setSelectedProject] = useState("");
   const [invalidHours, setInvalidHours] = useState(false);
@@ -33,9 +34,12 @@ export default function AddTaskHours() {
   const [selectedStartDate, setSelectedStartDate] = useState(new Date());
   const [selectedEndDate, setSelectedEndDate] = useState(new Date());
 
+  const [editableTask, setEditableTask] = useState(null);
+
+
   const userid = JSON.parse(localStorage.getItem("userID"));
 
-  const { data } = useQuery(getAssignedProject, {
+  const { data, refetch } = useQuery(getAssignedProject, {
     variables: { getAssignedProjectId: userid },
   });
 
@@ -44,7 +48,6 @@ export default function AddTaskHours() {
       const selectedProjectData = data.getAssignedProject.find(
         (project) => project.id === selectedModalProject
       );
-      console.log("Selected Project:", selectedProjectData);
       const filteredTaskHours = selectedProjectData
         ? selectedProjectData.addTaskHours.filter((task) => {
             const taskDate = new Date(task.date);
@@ -189,8 +192,6 @@ export default function AddTaskHours() {
   };
 
   const handleSaveModal = async () => {
-    //console.log("date:", selectedDate);
-
     if (!hours || !comments || !selectedModalProject) {
       toast.error("Please fill all required fields");
       return;
@@ -212,7 +213,7 @@ export default function AddTaskHours() {
           hours: parseFloat(hours),
         },
       });
-
+      refetch();
       closeModal();
       toast.success("Task hours added successfully");
     } catch (error) {
@@ -240,9 +241,9 @@ export default function AddTaskHours() {
     setSelectedProject(value);
 
     const selectedProjectData = data.getAssignedProject.find(
-      (project) => project.projectName === value
+      (project) => project.id === value
     );
-
+   // refetch()
     const filteredTaskHours = selectedProjectData
       ? selectedProjectData.addTaskHours.filter((task) => {
           const taskDate = new Date(task.date);
@@ -253,8 +254,8 @@ export default function AddTaskHours() {
           endDate.setHours(0, 0, 0, 0);
           return taskDate >= startDate && taskDate <= endDate;
         })
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
       : [];
-    console.log("Final task data:", filteredTaskHours);
     setSelectedProjectDetails(filteredTaskHours);
   };
 
@@ -295,6 +296,11 @@ export default function AddTaskHours() {
           hours: hours,
         },
       });
+      const updatedData = selectedProjectDetails.map((task)=>
+        task.date === selectedDate ? {...task, comments, hours} : task
+      )
+      refetch()
+      setSelectedProjectDetails(updatedData)
       closeModal();
       toast.success("Task hours updated successfully");
     } catch (error) {
@@ -309,7 +315,7 @@ export default function AddTaskHours() {
     setComments("");
   };
 
-  const handleDeleteModal = async ()=>{
+  const handleDeleteModal = async () => {
     try {
       const result = await deleteTaskHourMutation({
         variables: {
@@ -320,6 +326,7 @@ export default function AddTaskHours() {
           hours: hours,
         },
       });
+      refetch()
       closeModal();
       toast.success("Task hours deleted successfully");
     } catch (error) {
@@ -331,7 +338,54 @@ export default function AddTaskHours() {
     setSelectedModalProject("");
     setHours(0);
     setComments("");
-  }
+  };
+  
+
+  const handleEdit = (task) => {
+    // Set the task to be edited
+    setEditableTask({ ...task });
+    
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      await updateTaskHoursMutation({
+        variables: {
+          userId: userid,
+          assignProjectId: selectedProject,
+          comments: editableTask.comments,
+          date: editableTask.date,
+          day: days[new Date(editableTask.date).getDay()],
+          hours: editableTask.hours,
+        },
+      });
+     const updatedSelectedProjectDetails = selectedProjectDetails.map((task) =>
+     task.date === editableTask.date ? { ...task, ...editableTask } : task
+   );
+      refetch();  
+      setSelectedProjectDetails(updatedSelectedProjectDetails);
+      setEditableTask(null);
+      toast.success("Task hours updated successfully");
+    } catch (error) {
+      console.error("Error updating task hours", error);
+      toast.error("Error updating task hours");
+    }
+  };
+  
+
+  const handleCancelEdit = () => {
+    setEditableTask(null);
+  };
+
+
+  const isToday = (date) => {
+    const today = new Date();
+    return (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    );
+  };
   
   return (
     <div>
@@ -441,27 +495,29 @@ export default function AddTaskHours() {
             {/* Buttons */}
             <div className="flex justify-end">
               {isTaskExists ? (
-                <>
-                <button
-                  onClick={handleUpdateModal}
-                  className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded mr-2"
-                >
-                  Update 
-                </button>
-                <button
-                  onClick={handleDeleteModal}
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2"
-                >
-                  Delete 
-                </button>
-                </>
+                <div className="flex items-center">
+                  <button
+                    onClick={handleUpdateModal}
+                    className="flex items-center border border-blue-500 hover:bg-blue-200 text-blue-500 font-bold py-2 px-4 rounded mr-2"
+                  >
+                    Update <MdSecurityUpdateGood className="ml-1" />
+                  </button>
+                  <button
+                    onClick={handleDeleteModal}
+                    className="flex items-center border border-red-500 hover:bg-red-200 text-red-500 font-bold py-2 px-4 rounded mr-2"
+                  >
+                    Delete <MdDelete className="ml-1" />
+                  </button>
+                </div>
               ) : (
-                <button
-                  onClick={handleSaveModal}
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
-                >
-                  Save Task Hours
-                </button>
+                <div className="flex items-center">
+                  <button
+                    onClick={handleSaveModal}
+                    className="flex items-center border border-blue-500 hover:bg-blue-200 text-blue-500 font-bold py-2 px-4 rounded mr-2"
+                  >
+                    Save <IoIosSave className="ml-1" />
+                  </button>
+                </div>
               )}
               <button
                 onClick={closeModal}
@@ -550,7 +606,7 @@ export default function AddTaskHours() {
                 Select Project
               </option>
               {projects.map((project) => (
-                <option key={project.id} value={project.name}>
+                <option key={project.id} value={project.id}>
                   {project.name}
                 </option>
               ))}
@@ -581,42 +637,84 @@ export default function AddTaskHours() {
             />
           </div>
         </div>
-
-        {/* Second Table */}
+        {/*second table*/ }
         <div className="flex items-center justify-center">
-          {selectedProject ? (
-            <table className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200">
-              <thead>
-                <tr className="bg-blue-700 text-white">
-                  <th>Date</th>
-                  <th>Hours</th>
-                  <th>Comments</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedProjectDetails.length > 0 ? (
-                  selectedProjectDetails.map((task, index) => (
-                    <tr key={index}>
-                      <td className="text-center">{task.date}</td>
-                      <td className="text-center">{task.hours}</td>
-                      <td className="text-center">{task.comments}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="3" className="text-center">
-                      No task hours found.
+        {selectedProject ? (
+          <table className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200">
+            <thead>
+              <tr className="bg-blue-700 text-white">
+                <th>Date</th>
+                <th>Hours</th>
+                <th>Comments</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedProjectDetails.length > 0 ? (
+                selectedProjectDetails.map((task, index) => (
+                  <tr key={index}>
+                    <td className="text-center">{task.date}</td>
+                    <td className="text-center">{task.hours}</td>
+                    <td className="text-center">
+                      {editableTask?.date === task.date ? (
+                        <textarea
+                          value={editableTask?.comments}
+                          onChange={(e) =>
+                            setEditableTask({
+                              ...editableTask,
+                              comments: e.target.value,
+                            })
+                          }
+                        />
+                      ) : (
+                        task.comments
+                      )}
+                    </td>
+                    <td className="text-center">
+                      {isToday(new Date(task.date)) && (
+                        <div>
+                          {editableTask?.date === task.date ? (
+                        <div className="flex justify-center space-x-2">
+                        <button
+                          onClick={handleSaveEdit}
+                          className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      
+                         
+                          ) : (
+                            <button onClick={() => handleEdit(task)}><FaRegEdit />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-center text-gray-500 mt-4">
-              Please select a project to view completed time sheet.
-            </p>
-          )}
-        </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="text-center">
+                    No task hours found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        ) : (
+          <p className="text-center text-gray-500 mt-4">
+            Please select a project to view completed time sheet.
+          </p>
+        )}
+      </div>
+
       </div>
     </div>
   );
