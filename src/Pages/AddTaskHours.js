@@ -10,6 +10,8 @@ import { MdDelete } from "react-icons/md";
 import { MdSecurityUpdateGood } from "react-icons/md";
 import { IoIosSave } from "react-icons/io";
 import { FaRegEdit } from "react-icons/fa";
+import { format } from 'date-fns';
+
 
 Modal.setAppElement("#root");
 export default function AddTaskHours() {
@@ -163,21 +165,62 @@ export default function AddTaskHours() {
   const handleDayChange = async (projectId, dayIndex, value) => {
     const newTaskHours = [...taskHours];
     const oldValue = newTaskHours[projectId][dayIndex];
-
+  
     if (oldValue === 0 && parseFloat(value) > 0) {
       toast.error("Please Add Task Hours before updating.");
       return;
     }
 
+    if (oldValue !== 0 && parseFloat(value) === 0) {
+      toast.error("Please add valid hours");
+      return;
+    }
     newTaskHours[projectId][dayIndex] = parseFloat(value);
-
+  
     const totalHoursForDay = newTaskHours.reduce(
       (acc, projectHours) => acc + projectHours[dayIndex],
       0
     );
-
+  
     if (totalHoursForDay <= 24) {
       setTaskHours(newTaskHours);
+  
+      const formattedDate = format(
+        new Date(selectedDate),
+        'M/d/yyyy',
+      );
+  
+      try {
+        const projectData = data.getAssignedProject.find(
+          (project) => project.id === projects[projectId].id
+        );
+        
+        const comments = projectData.addTaskHours.find(
+          (task) => task.date === formattedDate
+        )?.comments || '';
+  
+        await updateTaskHoursMutation({
+          variables: {
+            userId: userid,
+            assignProjectId: projects[projectId].id,
+            comments: comments,
+            date: formattedDate,
+            day: days[dayIndex],
+            hours: parseFloat(value),
+          },
+        });
+        
+        const updatedData = selectedProjectDetails.map((task)=>
+        task.comments === comments ? {...task, hours: parseFloat(value)} : task
+      )
+      refetch()
+      setSelectedProjectDetails(updatedData)
+      refetch()
+        toast.success("Task hours updated successfully");
+      } catch (error) {
+        console.error("Error updating task hours", error);
+        toast.error("Error updating task hours");
+      }
     } else {
       toast.error("Total hours for the day cannot exceed 24.");
     }
@@ -552,7 +595,7 @@ export default function AddTaskHours() {
                         className="w-full text-center"
                         type="number"
                         min="0"
-                        max="12"
+                        max="24"
                         value={value}
                         onChange={(e) =>
                           handleDayChange(
@@ -564,6 +607,7 @@ export default function AddTaskHours() {
                         disabled={new Date().getDay() !== dayIndex}
                       />
                     </td>
+                    
                   ))}
                   <td className="py-2">
                     {taskHours[projectIndex].reduce(
