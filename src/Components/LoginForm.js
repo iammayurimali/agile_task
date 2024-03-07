@@ -5,9 +5,9 @@ import { toast } from 'react-hot-toast';
 import 'react-time-picker/dist/TimePicker.css';
 import {LOGIN} from "../GraphQl/Mutation"
 import { useMutation } from "@apollo/client";
-
-
+import { jwtDecode } from 'jwt-decode';
 const LoginForm = ({setIsLoggedIn}) => {
+
   const navigate = useNavigate();
   const [login] = useMutation(LOGIN);
   const [formData, setFormData] = useState({
@@ -15,7 +15,7 @@ const LoginForm = ({setIsLoggedIn}) => {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [accountType, setAccountType] = useState("Developer");
+ // const [accountType, setAccountType] = useState("Developer");
 
   function changeHandler(event) {
     setFormData((prevData) => ({
@@ -30,18 +30,18 @@ const LoginForm = ({setIsLoggedIn}) => {
       variables: {
         email: formData.email,
         password: formData.password,
-        accountType,
-      },
+        },
     })
       .then((response) => {
-        console.log("Login Response:", response)
         const { token,id } = response.data.login;
         toast.success("Logged In");
-       // console.log("token:",token)
-       localStorage.setItem("userID", JSON.stringify(id))
-        localStorage.setItem('accountType', JSON.stringify(accountType));
 
-        localStorage.setItem("token", JSON.stringify(token));
+       localStorage.setItem("userID", JSON.stringify(id))
+       localStorage.setItem("token", JSON.stringify(token));
+
+        const localtoken = JSON.parse(localStorage.getItem('token'));
+        const decoded = jwtDecode(localtoken);
+        const accountType = decoded.role
         setIsLoggedIn(true);
 
         accountType === "Manager"
@@ -54,36 +54,12 @@ const LoginForm = ({setIsLoggedIn}) => {
       });
   }
 
-  const handleAccountTypeChange = (event) => {
-    setAccountType(event.target.value);
-  };
+
 
    
   return (
     <form onSubmit={submitHandler}
     className="flex flex-col w-full gap-y-4 mt-6">
-           <div className="py-2 px-5 rounded-full transition-all duration-200 bg-gray-200">
-          <label
-            htmlFor="user"
-            className="py-2 px-5 rounded-full transition-all duration-200 text-gray-800"
-          >
-            Are you an employee or manager?
-          </label>
-
-          <select
-            id="user"
-            value={accountType}
-            onChange={handleAccountTypeChange}
-            className="border-none focus:outline-none"
-          >
-            <option value="Developer" className="py-2 px-5">
-              Developer
-            </option>
-            <option value="Manager" className="py-2 px-5">
-              Manager
-            </option>
-          </select>
-        </div>
 
         <label className='w-full'>
             <p className='text-[0.875rem] text-richblack-5 mb-1 leading-[1.375rem]'>

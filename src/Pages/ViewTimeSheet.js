@@ -3,20 +3,25 @@ import { useQuery } from "@apollo/client";
 import { getAssignedProject } from "../GraphQl/Query";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import Select from "react-select"; // Import react-select
+import Select from "react-select"; 
 import { CiSearch } from "react-icons/ci";
+import { jwtDecode } from "jwt-decode";
+//import { userID, accountType } from "../constant/glob";
 
 
 export default function ViewTimeSheet() {
+  const token = JSON.parse(localStorage.getItem('token'));
+  const decoded = jwtDecode(token);
+  const userID = decoded.id
+
   const [projects, setProjects] = useState([]);
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [selectedProjectDetails, setSelectedProjectDetails] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [searchText, setSearchText] = useState("");
-  const userid = JSON.parse(localStorage.getItem("userID"));
 
   const { data, loading, error } = useQuery(getAssignedProject, {
-    variables: { getAssignedProjectId: userid },
+    variables: { getAssignedProjectId: userID },
   });
   
   useEffect(() => {

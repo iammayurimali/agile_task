@@ -21,7 +21,7 @@ export default function Header({setIsLoggedIn}) {
     setIsLoggedIn(false)
     navigate("/login")
     setShowDropdown(false); 
-    window.location.reload();
+    //window.location.reload();
   };
 
   const handleClickOutside = (event) => {

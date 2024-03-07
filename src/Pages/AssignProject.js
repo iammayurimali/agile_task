@@ -8,12 +8,17 @@ import toast from "react-hot-toast";
 //import {GET_DEVELOPERS} from "../GraphQl/Query"
 
 export default function AssignProject() {
-  const { loading, error, data } = useQuery(getAllDevelopers);
+  const { loading, error, data, refetch } = useQuery(getAllDevelopers);
 
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedDeveloper, setSelectedDeveloper] = useState("");
 
-  const [assignproject,{ loading: mutationLoading, error: mutationError }] = useMutation(ASSIGNPROJECT)
+  const [assignproject,{ loading: mutationLoading, error: mutationError }] = useMutation(ASSIGNPROJECT, {
+    onCompleted: () => {
+      refetch();
+    },
+  });
+
 
   if (loading) return <p>loading</p>;
   if (error) return <p>ERROR</p>;

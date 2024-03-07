@@ -18,7 +18,6 @@ export const SIGNUP = gql`
         accountType: $accountType
       }
     ) {
-      id
       firstname
       lastname
       email
@@ -28,15 +27,15 @@ export const SIGNUP = gql`
   }
 `;
 export const LOGIN = gql`
-  mutation login($email: String, $password: String, $accountType: String) {
+  mutation login($email: String, $password: String) {
     login(
       loginData: {
         email: $email
         password: $password
-        accountType: $accountType
+       
       }
     ) {
-      id
+      
       accountType
       token
       firstname

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { getAssignedProject } from "../GraphQl/Query";
-import {ADDTASKHOURS, UPDATETASKHOUR, DELETETASKHOUR} from "../GraphQl/Mutation";
+import { ADDTASKHOURS, UPDATETASKHOUR, DELETETASKHOUR} from "../GraphQl/Mutation";
 import Modal from "react-modal";
 import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
@@ -10,8 +10,9 @@ import { MdDelete } from "react-icons/md";
 import { MdSecurityUpdateGood } from "react-icons/md";
 import { IoIosSave } from "react-icons/io";
 import { FaRegEdit } from "react-icons/fa";
-import { format } from 'date-fns';
-
+import { format } from "date-fns";
+import {jwtDecode} from "jwt-decode"
+//import {userID, accountType} from "../constant/glob"
 
 Modal.setAppElement("#root");
 export default function AddTaskHours() {
@@ -23,7 +24,7 @@ export default function AddTaskHours() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedModalProject, setSelectedModalProject] = useState("");
   const [filteredTaskHours, setFilteredTaskHours] = useState([]);
-  const [updateTaskHoursMutation] = useMutation(UPDATETASKHOUR)
+  const [updateTaskHoursMutation] = useMutation(UPDATETASKHOUR);
   const [deleteTaskHourMutation] = useMutation(DELETETASKHOUR);
 
   const [selectedProject, setSelectedProject] = useState("");
@@ -36,13 +37,13 @@ export default function AddTaskHours() {
   const [selectedStartDate, setSelectedStartDate] = useState(new Date());
   const [selectedEndDate, setSelectedEndDate] = useState(new Date());
 
+  const token = JSON.parse(localStorage.getItem('token'));
+  const decoded = jwtDecode(token);
+  const userID = decoded.id
+
   const [editableTask, setEditableTask] = useState(null);
-
-
-  const userid = JSON.parse(localStorage.getItem("userID"));
-
   const { data, refetch } = useQuery(getAssignedProject, {
-    variables: { getAssignedProjectId: userid },
+    variables: { getAssignedProjectId: userID },
   });
 
   useEffect(() => {
@@ -87,6 +88,7 @@ export default function AddTaskHours() {
         id: project.id,
         name: project.projectName,
       }));
+      refetch();
       setProjects(updatedProjects);
 
       const initialTaskHours = Array.from(
@@ -165,7 +167,7 @@ export default function AddTaskHours() {
   const handleDayChange = async (projectId, dayIndex, value) => {
     const newTaskHours = [...taskHours];
     const oldValue = newTaskHours[projectId][dayIndex];
-  
+
     if (oldValue === 0 && parseFloat(value) > 0) {
       toast.error("Please Add Task Hours before updating.");
       return;
@@ -176,32 +178,29 @@ export default function AddTaskHours() {
       return;
     }
     newTaskHours[projectId][dayIndex] = parseFloat(value);
-  
+
     const totalHoursForDay = newTaskHours.reduce(
       (acc, projectHours) => acc + projectHours[dayIndex],
       0
     );
-  
+
     if (totalHoursForDay <= 24) {
       setTaskHours(newTaskHours);
-  
-      const formattedDate = format(
-        new Date(selectedDate),
-        'M/d/yyyy',
-      );
-  
+
+      const formattedDate = format(new Date(selectedDate), "M/d/yyyy");
+
       try {
         const projectData = data.getAssignedProject.find(
           (project) => project.id === projects[projectId].id
         );
-        
-        const comments = projectData.addTaskHours.find(
-          (task) => task.date === formattedDate
-        )?.comments || '';
-  
+
+        const comments =
+          projectData.addTaskHours.find((task) => task.date === formattedDate)
+            ?.comments || "";
+
         await updateTaskHoursMutation({
           variables: {
-            userId: userid,
+            userId: userID,
             assignProjectId: projects[projectId].id,
             comments: comments,
             date: formattedDate,
@@ -209,13 +208,15 @@ export default function AddTaskHours() {
             hours: parseFloat(value),
           },
         });
-        
-        const updatedData = selectedProjectDetails.map((task)=>
-        task.comments === comments ? {...task, hours: parseFloat(value)} : task
-      )
-      refetch()
-      setSelectedProjectDetails(updatedData)
-      refetch()
+
+        const updatedData = selectedProjectDetails.map((task) =>
+          task.comments === comments
+            ? { ...task, hours: parseFloat(value) }
+            : task
+        );
+        refetch();
+        setSelectedProjectDetails(updatedData);
+        refetch();
         toast.success("Task hours updated successfully");
       } catch (error) {
         console.error("Error updating task hours", error);
@@ -248,7 +249,7 @@ export default function AddTaskHours() {
     try {
       const result = await addTaskHoursMutation({
         variables: {
-          userId: userid,
+          userId: userID,
           assignProjectId: selectedModalProject,
           comments: comments,
           date: selectedDate,
@@ -256,6 +257,7 @@ export default function AddTaskHours() {
           hours: parseFloat(hours),
         },
       });
+
       refetch();
       closeModal();
       toast.success("Task hours added successfully");
@@ -286,18 +288,19 @@ export default function AddTaskHours() {
     const selectedProjectData = data.getAssignedProject.find(
       (project) => project.id === value
     );
-   // refetch()
+    // refetch()
     const filteredTaskHours = selectedProjectData
-      ? selectedProjectData.addTaskHours.filter((task) => {
-          const taskDate = new Date(task.date);
-          const startDate = new Date(selectedStartDate);
-          const endDate = new Date(selectedEndDate);
-          taskDate.setHours(0, 0, 0, 0);
-          startDate.setHours(0, 0, 0, 0);
-          endDate.setHours(0, 0, 0, 0);
-          return taskDate >= startDate && taskDate <= endDate;
-        })
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
+      ? selectedProjectData.addTaskHours
+          .filter((task) => {
+            const taskDate = new Date(task.date);
+            const startDate = new Date(selectedStartDate);
+            const endDate = new Date(selectedEndDate);
+            taskDate.setHours(0, 0, 0, 0);
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+            return taskDate >= startDate && taskDate <= endDate;
+          })
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
       : [];
     setSelectedProjectDetails(filteredTaskHours);
   };
@@ -331,7 +334,7 @@ export default function AddTaskHours() {
     try {
       const result = await updateTaskHoursMutation({
         variables: {
-          userId: userid,
+          userId: userID,
           assignProjectId: selectedModalProject,
           comments: comments,
           date: selectedDate,
@@ -339,11 +342,11 @@ export default function AddTaskHours() {
           hours: hours,
         },
       });
-      const updatedData = selectedProjectDetails.map((task)=>
-        task.date === selectedDate ? {...task, comments, hours} : task
-      )
-      refetch()
-      setSelectedProjectDetails(updatedData)
+      const updatedData = selectedProjectDetails.map((task) =>
+        task.date === selectedDate ? { ...task, comments, hours } : task
+      );
+      refetch();
+      setSelectedProjectDetails(updatedData);
       closeModal();
       toast.success("Task hours updated successfully");
     } catch (error) {
@@ -359,42 +362,44 @@ export default function AddTaskHours() {
   };
 
   const handleDeleteModal = async () => {
-    try {
-      const result = await deleteTaskHourMutation({
-        variables: {
-          assignProjectId: selectedModalProject,
-          comments: comments,
-          date: selectedDate,
-          day: days[new Date(selectedDate).getDay()],
-          hours: hours,
-        },
-      });
-      refetch()
-      closeModal();
-      toast.success("Task hours deleted successfully");
-    } catch (error) {
-      console.error("Error deleting task hours", error);
-      toast.error("Error deleting task hours");
-    }
-    // Resetting states
-    setIsModalOpen(false);
-    setSelectedModalProject("");
-    setHours(0);
-    setComments("");
-  };
+    const isConfirmed = window.confirm("Are you sure you want to delete this task?");
   
+    if (isConfirmed) {
+      try {
+        const result = await deleteTaskHourMutation({
+          variables: {
+            assignProjectId: selectedModalProject,
+            comments: comments,
+            date: selectedDate,
+            day: days[new Date(selectedDate).getDay()],
+            hours: hours,
+          },
+        });
+  
+        refetch();
+        closeModal();
+        toast.success("Task hours deleted successfully");
+      } catch (error) {
+        console.error("Error deleting task hours", error);
+        toast.error("Error deleting task hours");
+      }
+      setIsModalOpen(false);
+      setSelectedModalProject("");
+      setHours(0);
+      setComments("");
+    }
+  };
 
   const handleEdit = (task) => {
     // Set the task to be edited
     setEditableTask({ ...task });
-    
   };
 
   const handleSaveEdit = async () => {
     try {
       await updateTaskHoursMutation({
         variables: {
-          userId: userid,
+          userId: userID,
           assignProjectId: selectedProject,
           comments: editableTask.comments,
           date: editableTask.date,
@@ -402,10 +407,10 @@ export default function AddTaskHours() {
           hours: editableTask.hours,
         },
       });
-     const updatedSelectedProjectDetails = selectedProjectDetails.map((task) =>
-     task.date === editableTask.date ? { ...task, ...editableTask } : task
-   );
-      refetch();  
+      const updatedSelectedProjectDetails = selectedProjectDetails.map((task) =>
+        task.date === editableTask.date ? { ...task, ...editableTask } : task
+      );
+      refetch();
       setSelectedProjectDetails(updatedSelectedProjectDetails);
       setEditableTask(null);
       toast.success("Task hours updated successfully");
@@ -414,12 +419,10 @@ export default function AddTaskHours() {
       toast.error("Error updating task hours");
     }
   };
-  
 
   const handleCancelEdit = () => {
     setEditableTask(null);
   };
-
 
   const isToday = (date) => {
     const today = new Date();
@@ -429,7 +432,7 @@ export default function AddTaskHours() {
       date.getFullYear() === today.getFullYear()
     );
   };
-  
+
   return (
     <div>
       <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
@@ -506,7 +509,7 @@ export default function AddTaskHours() {
                 Project<span className="text-red-500">*</span>
               </label>
               <select
-                className="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-5 py-3 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                className="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-5 py-3 outline-none transition focus:border-black active:border-black dark:border-form-strokedark dark:bg-form-input dark:focus:border-black"
                 value={selectedModalProject}
                 onChange={(e) => setSelectedModalProject(e.target.value)}
                 required
@@ -574,64 +577,69 @@ export default function AddTaskHours() {
 
         {/* First Table(Main Table) */}
         <div className="container mx-auto mt-8">
-          <table
-            className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200"
-            style={{ marginTop: "80px" }}
-          >
-            <thead>{renderHeader()}</thead>
-            <tbody>
-              {projects.map((project, projectIndex) => (
-                <tr
-                  key={project.id}
-                  id={project.id}
-                  className="border text-center"
-                >
-                  <td id={project.id} className="py-1">
-                    {project.name}
-                  </td>
-                  {taskHours[projectIndex].map((value, dayIndex) => (
-                    <td key={dayIndex} className="py-2">
-                      <input
-                        className="w-full text-center"
-                        type="number"
-                        min="0"
-                        max="24"
-                        value={value}
-                        onChange={(e) =>
-                          handleDayChange(
-                            projectIndex,
-                            dayIndex,
-                            e.target.value
-                          )
-                        }
-                        disabled={new Date().getDay() !== dayIndex}
-                      />
+          {projects.length > 0 ? (
+            <table
+              className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200"
+              style={{ marginTop: "80px" }}
+            >
+              <thead>{renderHeader()}</thead>
+              <tbody>
+                {projects.map((project, projectIndex) => (
+                  <tr
+                    key={project.id}
+                    id={project.id}
+                    className="border text-center"
+                  >
+                    <td id={project.id} className="py-1">
+                      {project.name}
                     </td>
-                    
-                  ))}
-                  <td className="py-2">
-                    {taskHours[projectIndex].reduce(
-                      (acc, hours) => acc + hours,
-                      0
-                    )}
-                  </td>
-                </tr>
-              ))}
-              <br />
-              <tr className="bg-blue-400 text-white text-center">
-                <td className="py-2 text-center">Total</td>
-                {Array.from({ length: 7 }, (_, dayIndex) => (
-                  <td key={dayIndex} className="py-2">
-                    {taskHours.reduce(
-                      (acc, projectHours) => acc + projectHours[dayIndex],
-                      0
-                    )}
-                  </td>
+                    {taskHours[projectIndex].map((value, dayIndex) => (
+                      <td key={dayIndex} className="py-2">
+                        <input
+                          className="w-full text-center"
+                          type="number"
+                          min="0"
+                          max="24"
+                          value={value}
+                          onChange={(e) =>
+                            handleDayChange(
+                              projectIndex,
+                              dayIndex,
+                              e.target.value
+                            )
+                          }
+                          disabled={new Date().getDay() !== dayIndex}
+                        />
+                      </td>
+                    ))}
+                    <td className="py-2">
+                      {taskHours[projectIndex].reduce(
+                        (acc, hours) => acc + hours,
+                        0
+                      )}
+                    </td>
+                  </tr>
                 ))}
-                <td className="py-2 ">Total = {totalWeekHours}</td>
-              </tr>
-            </tbody>
-          </table>
+                <br />
+                <tr className="bg-blue-400 text-white text-center">
+                  <td className="py-2 text-center">Total</td>
+                  {Array.from({ length: 7 }, (_, dayIndex) => (
+                    <td key={dayIndex} className="py-2">
+                      {taskHours.reduce(
+                        (acc, projectHours) => acc + projectHours[dayIndex],
+                        0
+                      )}
+                    </td>
+                  ))}
+                  <td className="py-2 ">Total = {totalWeekHours}</td>
+                </tr>
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-center text-gray-600 mt-4">
+              No projects are assigned yet.
+            </p>
+          )}
         </div>
         <div style={{ marginBottom: "20px" }} />
 
@@ -681,84 +689,82 @@ export default function AddTaskHours() {
             />
           </div>
         </div>
-        {/*second table*/ }
+        {/*second table*/}
         <div className="flex items-center justify-center">
-        {selectedProject ? (
-          <table className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200">
-            <thead>
-              <tr className="bg-blue-700 text-white">
-                <th>Date</th>
-                <th>Hours</th>
-                <th>Comments</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedProjectDetails.length > 0 ? (
-                selectedProjectDetails.map((task, index) => (
-                  <tr key={index}>
-                    <td className="text-center">{task.date}</td>
-                    <td className="text-center">{task.hours}</td>
-                    <td className="text-center">
-                      {editableTask?.date === task.date ? (
-                        <textarea
-                          value={editableTask?.comments}
-                          onChange={(e) =>
-                            setEditableTask({
-                              ...editableTask,
-                              comments: e.target.value,
-                            })
-                          }
-                        />
-                      ) : (
-                        task.comments
-                      )}
-                    </td>
-                    <td className="text-center">
-                      {isToday(new Date(task.date)) && (
-                        <div>
-                          {editableTask?.date === task.date ? (
-                        <div className="flex justify-center space-x-2">
-                        <button
-                          onClick={handleSaveEdit}
-                          className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                      
-                         
-                          ) : (
-                            <button onClick={() => handleEdit(task)}><FaRegEdit />
-                            </button>
-                          )}
-                        </div>
-                      )}
+          {selectedProject ? (
+            <table className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200">
+              <thead>
+                <tr className="bg-blue-700 text-white">
+                  <th>Date</th>
+                  <th>Hours</th>
+                  <th>Comments</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedProjectDetails.length > 0 ? (
+                  selectedProjectDetails.map((task, index) => (
+                    <tr key={index}>
+                      <td className="text-center">{task.date}</td>
+                      <td className="text-center">{task.hours}</td>
+                      <td className="text-center">
+                        {editableTask?.date === task.date ? (
+                          <textarea
+                            value={editableTask?.comments}
+                            onChange={(e) =>
+                              setEditableTask({
+                                ...editableTask,
+                                comments: e.target.value,
+                              })
+                            }
+                          />
+                        ) : (
+                          task.comments
+                        )}
+                      </td>
+                      <td className="text-center">
+                        {isToday(new Date(task.date)) && (
+                          <div>
+                            {editableTask?.date === task.date ? (
+                              <div className="flex justify-center space-x-2">
+                                <button
+                                  onClick={handleSaveEdit}
+                                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={handleCancelEdit}
+                                  className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button onClick={() => handleEdit(task)}>
+                                <FaRegEdit />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="text-center">
+                      No task hours found.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="text-center">
-                    No task hours found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        ) : (
-          <p className="text-center text-gray-500 mt-4">
-            Please select a project to view completed time sheet.
-          </p>
-        )}
-      </div>
-
+                )}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-center text-gray-500 mt-4">
+              Please select a project to view completed time sheet.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

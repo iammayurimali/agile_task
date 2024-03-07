@@ -3,9 +3,12 @@ import { BsPencilSquare } from "react-icons/bs";
 import { CiViewTimeline } from "react-icons/ci";
 import { Link } from "react-router-dom";
 import { SiTask } from "react-icons/si";
+import { jwtDecode } from "jwt-decode";
 
 export default function Sider({ setIsLoggedIn }) {
-  const selectedUser = JSON.parse(localStorage.getItem("accountType")) || [];
+  const token = JSON.parse(localStorage.getItem('token'));
+  const decoded = jwtDecode(token);
+  const selectedUser = decoded.role
 
   return (
     <div className="absolute left-0 top-0 z-9999 flex flex-col h-screen w-72.5 overflow-hidden bg-black duration-300 ease-linear dark:bg-boxdark lg:relative lg:translate-x-0">
