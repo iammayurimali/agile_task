@@ -17,7 +17,7 @@ export default function ViewDeveloperTimeSheet() {
 
   const { data: developersData } = useQuery(getAllDevelopers);
 
-  const { data, loading, error } = useQuery(getUserById, {
+  const { data } = useQuery(getUserById, {
     variables: { getUserByIdId: selectedDeveloper },
     skip: !selectedDeveloper,
   });

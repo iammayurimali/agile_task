@@ -8,10 +8,6 @@ import { SIGNUP } from "../GraphQl/Mutation";
 
 const SignupForm = ({ setIsLoggedIn }) => {
   const isValidName = (name) => /^[A-Za-z]+$/.test(name);
-  const isValidEmail = (email) => /^[a-z0-9.!#$%&'*@+=?^_`{|}~-]+$/.test(email)
-  //const isValidEmail = (email) => /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@gmail\.com$/.test(email);
-
-
   const navigate = useNavigate();
   const [signup, { loading }] = useMutation(SIGNUP);
 
@@ -39,18 +35,10 @@ const SignupForm = ({ setIsLoggedIn }) => {
       console.error("Invalid last name. Use alphabets only.");
       return;
     }
-
-    if (name === "email" && !isValidEmail(value)) {
-      console.error("Invalid email name. Use alphabets only.");
-      return;
-    }
-
-      setFormData((prevData) => ({
-        ...prevData,
-        [event.target.name]: event.target.value,
-      }));
-    
-   
+    setFormData((prevData) => ({
+      ...prevData,
+      [event.target.name]: event.target.value,
+    }));
   }
 
   function submitHandler(event) {
@@ -156,8 +144,10 @@ const SignupForm = ({ setIsLoggedIn }) => {
               type="email"
               name="email"
               onChange={changeHandler}
-              placeholder="Enter Email Address "
+              placeholder="Enter Email Address"
               value={formData.email}
+              pattern=".+@gmail\.com"
+              title="Please enter a valid Gmail address"
               className="bg-richblack-800 rounded-[0.5rem] text-richblack-5 w-full p-[12px]"
             />
           </label>

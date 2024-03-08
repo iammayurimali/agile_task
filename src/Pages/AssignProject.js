@@ -1,5 +1,5 @@
 import React from "react";
-import { gql, useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client";
 import { getAllDevelopers } from "../GraphQl/Query";
 import {ASSIGNPROJECT} from "../GraphQl/Mutation"
 import {useState} from "react"

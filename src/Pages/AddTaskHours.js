@@ -263,7 +263,7 @@ export default function AddTaskHours() {
       toast.success("Task hours added successfully");
     } catch (error) {
       console.error("Error adding task hours", error);
-      toast.error("Project Task Already added");
+      toast.error("Error adding task hours");
     }
 
     // Resetting states
