@@ -16,6 +16,7 @@ query GetAssignedProject($getAssignedProjectId: ID!) {
     id
     projectName
     addTaskHours {
+      assignProjectId
       comments
       date
       day

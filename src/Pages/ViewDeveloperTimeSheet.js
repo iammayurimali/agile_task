@@ -5,7 +5,8 @@ import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { CiSearch } from "react-icons/ci";
-
+import { BsGraphUpArrow } from "react-icons/bs";
+import ProjectHoursModal from "./SubComponent/ProjectHoursGraphModal";
 
 export default function ViewDeveloperTimeSheet() {
   const [selectedStartDate, setSelectedStartDate] = useState(new Date());
@@ -14,6 +15,8 @@ export default function ViewDeveloperTimeSheet() {
   const [searchText, setSearchText] = useState("");
   const [developers, setDevelopers] = useState([]);
   const [taskHoursData, setTaskHoursData] = useState([]);
+  const [projectTotalHours, setProjectTotalHours] = useState({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: developersData } = useQuery(getAllDevelopers);
 
@@ -38,17 +41,29 @@ export default function ViewDeveloperTimeSheet() {
           selectedStartDate.setHours(0, 0, 0, 0);
           selectedEndDate.setHours(0, 0, 0, 0);
           const isWithinSelectedMonth =
-              taskDate >= selectedStartDate && taskDate <= selectedEndDate;
-            const includesSearchText = task.comments
-              .toLowerCase()
-              .includes(searchText.toLowerCase());
+            taskDate >= selectedStartDate && taskDate <= selectedEndDate;
+          const includesSearchText = task.comments
+            .toLowerCase()
+            .includes(searchText.toLowerCase());
 
-            return isWithinSelectedMonth && includesSearchText;
+          return isWithinSelectedMonth && includesSearchText;
         })
         .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      const projectWiseHours = filteredTaskHours.reduce((acc, task) => {
+        if (!acc[task.projectName]) {
+          acc[task.projectName] = 0;
+        }
+        acc[task.projectName] += task.hours;
+        return acc;
+      }, {});
+
+      setProjectTotalHours(projectWiseHours);
+
       setTaskHoursData(filteredTaskHours);
     }
   }, [data, selectedEndDate, selectedStartDate, searchText]);
+  console.log("Developer Total hours: ", projectTotalHours);
 
   useEffect(() => {
     if (developersData && developersData.getAllDevelopers) {
@@ -81,6 +96,14 @@ export default function ViewDeveloperTimeSheet() {
       regex,
       (match) => `<span style="background-color: yellow">${match}</span>`
     );
+  };
+
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
   return (
     <div>
@@ -141,67 +164,105 @@ export default function ViewDeveloperTimeSheet() {
               Search
             </span>
             <div className="relative w-100">
-      
-            <input
-              type="text"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              className="border p-2 rounded w-100"
-              placeholder={`Search comments...`}
-            />
-            <CiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                className="border p-2 rounded w-100"
+                placeholder={`Search comments...`}
+              />
+              <CiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2" />
             </div>
           </div>
+          {Object.keys(projectTotalHours).length > 0 && (
+            <div className="mt-7">
+              <button
+                onClick={openModal}
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded"
+              >
+                <BsGraphUpArrow />
+              </button>
+            </div>
+          )}
+          {/* Modal for Project Wise Hours */}
+          <ProjectHoursModal
+            isOpen={isModalOpen}
+            onRequestClose={closeModal}
+            projectTotalHours={projectTotalHours}
+            viewer = "Manager"
+          />
         </div>
 
         {/* Table of developer Time Sheet */}
         <div className="flex items-center justify-center h-400px overflow-y: auto">
           {selectedDeveloper.length > 0 ? (
-             <table className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200">
-             <thead>
-               <tr className="bg-blue-700 text-white">
-                 <th>Project</th>
-                 <th>Date</th>
-                 <th>Hours</th>
-                 <th>Comments</th>
-               </tr>
-             </thead>
- 
-             <tbody>
-               {taskHoursData.length > 0 ? (
-                 taskHoursData.map((task) => (
-                   <tr key={task.id}>
-                     <td className="text-center">{task.projectName}</td>
-                     <td className="text-center">{task.date}</td>
-                     <td className="text-center">{task.hours}</td>
-                     <td className="text-center">
-                         {searchText ? (
-                           <span
-                             dangerouslySetInnerHTML={{
-                               __html: highlightSearchedWord(task.comments),
-                             }}
-                           />
-                         ) : (
-                           task.comments
-                         )}
-                       </td>
-                   </tr>
-                 ))
-               ) : (
-                 <tr>
-                   <td colSpan="4" className="text-center">
-                     No task hours found.
-                   </td>
-                 </tr>
-               )}
-             </tbody>
-           </table>
-          ) :(
+            <table className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200">
+              <thead>
+                <tr className="bg-blue-700 text-white">
+                  <th>Project</th>
+                  <th>Date</th>
+                  <th>Hours</th>
+                  <th>Comments</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {taskHoursData.length > 0 ? (
+                  taskHoursData.map((task) => (
+                    <tr key={task.id}>
+                      <td className="text-center">{task.projectName}</td>
+                      <td className="text-center">{task.date}</td>
+                      <td className="text-center">{task.hours}</td>
+                      <td className="text-center">
+                        {searchText ? (
+                          <span
+                            dangerouslySetInnerHTML={{
+                              __html: highlightSearchedWord(task.comments),
+                            }}
+                          />
+                        ) : (
+                          task.comments
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="text-center">
+                      No task hours found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          ) : (
             <p className="text-center text-gray-500 mt-4">
-            Please select a developer to view completed time sheet.
-          </p>
+              Please select a developer to view completed time sheet.
+            </p>
           )}
-         
+        </div>
+        {/* Display project-wise hours */}
+        <div className="mt-4 flex items-left justify-start">
+          {selectedDeveloper.length > 0 && (
+            <div className="bg-gray-100 p-4 rounded-lg shadow-md">
+              {Object.keys(projectTotalHours).length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                    Total Hours
+                  </h3>
+                  <ul>
+                    {Object.entries(projectTotalHours).map(
+                      ([project, hours]) => (
+                        <li key={project} className="text-gray-700">
+                          {`${project}: ${hours} hours`}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

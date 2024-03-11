@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { getAssignedProject } from "../GraphQl/Query";
-import { ADDTASKHOURS, UPDATETASKHOUR, DELETETASKHOUR} from "../GraphQl/Mutation";
+import {
+  ADDTASKHOURS,
+  UPDATETASKHOUR,
+  DELETETASKHOUR,
+} from "../GraphQl/Mutation";
 import Modal from "react-modal";
 import toast from "react-hot-toast";
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { MdDelete } from "react-icons/md";
-import { MdSecurityUpdateGood } from "react-icons/md";
-import { IoIosSave } from "react-icons/io";
-import { FaRegEdit } from "react-icons/fa";
 import { format } from "date-fns";
-import {jwtDecode} from "jwt-decode"
-//import {userID, accountType} from "../constant/glob"
+import { jwtDecode } from "jwt-decode";
+import AddTaskHourModal from "./SubComponent/AddTaskHourModal";
+import TimeSheetTables from "./SubComponent/TimeSheetTables";
 
 Modal.setAppElement("#root");
 export default function AddTaskHours() {
@@ -37,9 +37,9 @@ export default function AddTaskHours() {
   const [selectedStartDate, setSelectedStartDate] = useState(new Date());
   const [selectedEndDate, setSelectedEndDate] = useState(new Date());
 
-  const token = JSON.parse(localStorage.getItem('token'));
+  const token = JSON.parse(localStorage.getItem("token"));
   const decoded = jwtDecode(token);
-  const userID = decoded.id
+  const userID = decoded.id;
 
   const [editableTask, setEditableTask] = useState(null);
   const { data, refetch } = useQuery(getAssignedProject, {
@@ -138,31 +138,6 @@ export default function AddTaskHours() {
     setTotalWeekHours(totalHours);
   }, [taskHours]);
 
-  const getFormattedDate = (dayIndex) => {
-    const currentDate = new Date();
-    const dayDifference = dayIndex - currentDate.getDay();
-    const targetDate = new Date(currentDate);
-    targetDate.setDate(currentDate.getDate() + dayDifference);
-    const options = { day: "2-digit", month: "2-digit", year: "numeric" };
-    const formattedDate = targetDate.toLocaleDateString(undefined, options);
-    return formattedDate;
-  };
-
-  const renderHeader = () => {
-    return (
-      <tr className="bg-blue-700 text-white">
-        <th className="py-2">Project</th>
-        {days.map((day, index) => (
-          <th key={index} className="py-2">
-            {getFormattedDate(index)}
-            <br />
-            {day}
-          </th>
-        ))}
-        <th className="py-2">Total Week Hours</th>
-      </tr>
-    );
-  };
 
   const handleDayChange = async (projectId, dayIndex, value) => {
     const newTaskHours = [...taskHours];
@@ -362,8 +337,10 @@ export default function AddTaskHours() {
   };
 
   const handleDeleteModal = async () => {
-    const isConfirmed = window.confirm("Are you sure you want to delete this task?");
-  
+    const isConfirmed = window.confirm(
+      "Are you sure you want to delete this task?"
+    );
+
     if (isConfirmed) {
       try {
         const result = await deleteTaskHourMutation({
@@ -375,7 +352,7 @@ export default function AddTaskHours() {
             hours: hours,
           },
         });
-  
+
         refetch();
         closeModal();
         toast.success("Task hours deleted successfully");
@@ -450,321 +427,48 @@ export default function AddTaskHours() {
           Add Task Hours
         </button>
 
-        <Modal
-          isOpen={isModalOpen}
-          onRequestClose={closeModal}
-          contentLabel="Add Task Hours Modal"
-          style={{
-            content: {
-              width: "500px",
-              height: "500px",
-              margin: "auto",
-              overflow: "auto",
-              boxShadow: "2xl",
-            },
-            overlay: {
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            },
-          }}
-        >
-          <div className="bg-white p-8 rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold mb-4">Add Task Hours</h2>
-            <div className="flex mb-4">
-              {/* Date input field */}
-              <div className="flex flex-col mr-4">
-                <label className="block text-sm font-medium text-gray-600 mb-1">
-                  Date
-                </label>
-                <DatePicker
-                  selected={selectedDate}
-                  onChange={(date) => setSelectedDate(date)}
-                  disabled
-                  className="w-48 p-2 border rounded"
-                />
-              </div>
-              {/* Hours input field */}
-              <div className="flex flex-col">
-                <label className="block text-sm font-medium text-gray-600 mb-1">
-                  Hours<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="12"
-                  value={hours}
-                  onChange={(e) => handleHoursChange(e.target.value)}
-                  className={`w-48 p-2 border rounded ${
-                    invalidHours ? "border-red-500" : ""
-                  }`}
-                  required
-                />
-              </div>
-            </div>
-            {/* Project dropdown */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Project<span className="text-red-500">*</span>
-              </label>
-              <select
-                className="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent px-5 py-3 outline-none transition focus:border-black active:border-black dark:border-form-strokedark dark:bg-form-input dark:focus:border-black"
-                value={selectedModalProject}
-                onChange={(e) => setSelectedModalProject(e.target.value)}
-                required
-                id="modalprojects"
-              >
-                <option>Select Project</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {/* Comments input field */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Comments<span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={comments}
-                onChange={(e) => setComments(e.target.value)}
-                className="w-full p-2 border rounded"
-                minLength="10"
-                required
-              />
-            </div>
-            {/* Validation message */}
+        <AddTaskHourModal
+          isModalOpen={isModalOpen}
+          closeModal={closeModal}
+          handleSaveModal={handleSaveModal}
+          handleUpdateModal={handleUpdateModal}
+          handleDeleteModal={handleDeleteModal}
+          isTaskExists={isTaskExists}
+          hours={hours}
+          comments={comments}
+          setComments={setComments}
+          setSelectedDate = {setSelectedDate}
+          selectedModalProject={selectedModalProject}
+          setSelectedModalProject={setSelectedModalProject}
+          projects={projects}
+          selectedDate={selectedDate}
+          selectedProjectDetails={selectedProjectDetails}
+          handleHoursChange = {handleHoursChange}
+          invalidHours={invalidHours}
+        />
 
-            {/* Buttons */}
-            <div className="flex justify-end">
-              {isTaskExists ? (
-                <div className="flex items-center">
-                  <button
-                    onClick={handleUpdateModal}
-                    className="flex items-center border border-blue-500 hover:bg-blue-200 text-blue-500 font-bold py-2 px-4 rounded mr-2"
-                  >
-                    Update <MdSecurityUpdateGood className="ml-1" />
-                  </button>
-                  <button
-                    onClick={handleDeleteModal}
-                    className="flex items-center border border-red-500 hover:bg-red-200 text-red-500 font-bold py-2 px-4 rounded mr-2"
-                  >
-                    Delete <MdDelete className="ml-1" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center">
-                  <button
-                    onClick={handleSaveModal}
-                    className="flex items-center border border-blue-500 hover:bg-blue-200 text-blue-500 font-bold py-2 px-4 rounded mr-2"
-                  >
-                    Save <IoIosSave className="ml-1" />
-                  </button>
-                </div>
-              )}
-              <button
-                onClick={closeModal}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-600 font-bold py-2 px-4 rounded"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </Modal>
-
-        {/* First Table(Main Table) */}
-        <div className="container mx-auto mt-8">
-          {projects.length > 0 ? (
-            <table
-              className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200"
-              style={{ marginTop: "80px" }}
-            >
-              <thead>{renderHeader()}</thead>
-              <tbody>
-                {projects.map((project, projectIndex) => (
-                  <tr
-                    key={project.id}
-                    id={project.id}
-                    className="border text-center"
-                  >
-                    <td id={project.id} className="py-1">
-                      {project.name}
-                    </td>
-                    {taskHours[projectIndex].map((value, dayIndex) => (
-                      <td key={dayIndex} className="py-2">
-                        <input
-                          className="w-full text-center"
-                          type="number"
-                          min="0"
-                          max="24"
-                          value={value}
-                          onChange={(e) =>
-                            handleDayChange(
-                              projectIndex,
-                              dayIndex,
-                              e.target.value
-                            )
-                          }
-                          disabled={new Date().getDay() !== dayIndex}
-                        />
-                      </td>
-                    ))}
-                    <td className="py-2">
-                      {taskHours[projectIndex].reduce(
-                        (acc, hours) => acc + hours,
-                        0
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                <br />
-                <tr className="bg-blue-400 text-white text-center">
-                  <td className="py-2 text-center">Total</td>
-                  {Array.from({ length: 7 }, (_, dayIndex) => (
-                    <td key={dayIndex} className="py-2">
-                      {taskHours.reduce(
-                        (acc, projectHours) => acc + projectHours[dayIndex],
-                        0
-                      )}
-                    </td>
-                  ))}
-                  <td className="py-2 ">Total = {totalWeekHours}</td>
-                </tr>
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-center text-gray-600 mt-4">
-              No projects are assigned yet.
-            </p>
-          )}
-        </div>
-        <div style={{ marginBottom: "20px" }} />
-
-        {/* Project Name and select start/end date*/}
-        <div className="flex gap-4 mb-4">
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-gray-500 mb-1">
-              Project
-            </span>
-            <select
-              className="border p-2 rounded"
-              value={selectedProject}
-              onChange={(e) => handleProjectSelectChange(e.target.value)}
-            >
-              <option value="" disabled>
-                Select Project
-              </option>
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-gray-500 mb-1">
-              Start Date
-            </span>
-            <DatePicker
-              selected={new Date(selectedStartDate)}
-              onChange={(date) => handleStartDateChange(date)}
-              filterDate={filterDates}
-              className="border p-2 rounded"
-            />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-gray-500 mb-1">
-              End Date
-            </span>
-            <DatePicker
-              selected={new Date(selectedEndDate)}
-              onChange={(date) => handleEndDateChange(date)}
-              filterDate={filterDates}
-              minDate={new Date(selectedStartDate)}
-              className="border p-2 rounded"
-            />
-          </div>
-        </div>
-        {/*second table*/}
-        <div className="flex items-center justify-center">
-          {selectedProject ? (
-            <table className="w-full border rounded-lg overflow-hidden shadow-lg bg-gray-200">
-              <thead>
-                <tr className="bg-blue-700 text-white">
-                  <th>Date</th>
-                  <th>Hours</th>
-                  <th>Comments</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedProjectDetails.length > 0 ? (
-                  selectedProjectDetails.map((task, index) => (
-                    <tr key={index}>
-                      <td className="text-center">{task.date}</td>
-                      <td className="text-center">{task.hours}</td>
-                      <td className="text-center">
-                        {editableTask?.date === task.date ? (
-                          <textarea
-                            value={editableTask?.comments}
-                            onChange={(e) =>
-                              setEditableTask({
-                                ...editableTask,
-                                comments: e.target.value,
-                              })
-                            }
-                          />
-                        ) : (
-                          task.comments
-                        )}
-                      </td>
-                      <td className="text-center">
-                        {isToday(new Date(task.date)) && (
-                          <div>
-                            {editableTask?.date === task.date ? (
-                              <div className="flex justify-center space-x-2">
-                                <button
-                                  onClick={handleSaveEdit}
-                                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded"
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  onClick={handleCancelEdit}
-                                  className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            ) : (
-                              <button onClick={() => handleEdit(task)}>
-                                <FaRegEdit />
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="4" className="text-center">
-                      No task hours found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-center text-gray-500 mt-4">
-              Please select a project to view completed time sheet.
-            </p>
-          )}
-        </div>
+       {/* TimeSheetTables component */}
+       <TimeSheetTables
+          projects={projects}
+          taskHours={taskHours}
+          totalWeekHours={totalWeekHours}
+          selectedProject={selectedProject}
+          selectedStartDate={selectedStartDate}
+          selectedEndDate={selectedEndDate}
+          selectedProjectDetails={selectedProjectDetails}
+          handleDayChange={handleDayChange}
+          handleProjectSelectChange={handleProjectSelectChange}
+          handleStartDateChange={handleStartDateChange}
+          handleEndDateChange={handleEndDateChange}
+          filterDates={filterDates}
+          isToday={isToday}
+          editableTask={editableTask}
+          setEditableTask={setEditableTask}
+          handleSaveEdit={handleSaveEdit}
+          handleCancelEdit={handleCancelEdit}
+          handleEdit={handleEdit}
+          days = {days}
+        />
       </div>
     </div>
   );

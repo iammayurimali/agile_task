@@ -3,27 +3,28 @@ import { useQuery } from "@apollo/client";
 import { getAssignedProject } from "../GraphQl/Query";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import Select from "react-select"; 
+import Select from "react-select";
 import { CiSearch } from "react-icons/ci";
 import { jwtDecode } from "jwt-decode";
-//import { userID, accountType } from "../constant/glob";
-
+import { BsGraphUpArrow } from "react-icons/bs";
+import ProjectHoursModal from "./SubComponent/ProjectHoursGraphModal";
 
 export default function ViewTimeSheet() {
-  const token = JSON.parse(localStorage.getItem('token'));
+  const token = JSON.parse(localStorage.getItem("token"));
   const decoded = jwtDecode(token);
-  const userID = decoded.id
+  const userID = decoded.id;
 
   const [projects, setProjects] = useState([]);
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [selectedProjectDetails, setSelectedProjectDetails] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [searchText, setSearchText] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data, loading, error } = useQuery(getAssignedProject, {
     variables: { getAssignedProjectId: userID },
   });
-  
+
   useEffect(() => {
     if (data && data.getAssignedProject) {
       const projectData = data.getAssignedProject;
@@ -33,6 +34,7 @@ export default function ViewTimeSheet() {
           label: project.projectName,
         }))
       );
+      console.log("Projects: ", selectedProjects);
     }
   }, [data]);
 
@@ -91,6 +93,36 @@ export default function ViewTimeSheet() {
     );
   };
 
+  const calculateProjectWiseHours = () => {
+    const projectWiseHours = {};
+
+    selectedProjectDetails.forEach((task) => {
+      const projectId = task.assignProjectId;
+      const projectLabel = data.getAssignedProject.find(
+        (project) => project.id === projectId
+      )?.projectName;
+
+      if (!projectWiseHours[projectId]) {
+        projectWiseHours[projectId] = { projectName: projectLabel, hours: 0 };
+      }
+
+      projectWiseHours[projectId].hours += parseFloat(task.hours) || 0;
+    });
+
+    return projectWiseHours;
+  };
+
+  const projectWiseHours = calculateProjectWiseHours();
+  console.log("Function data: ", projectWiseHours);
+
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
   return (
     <div>
       <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
@@ -136,19 +168,36 @@ export default function ViewTimeSheet() {
               Search
             </span>
             <div className="relative w-100">
-      
-            <input
-              type="text"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              className="border p-2 rounded w-100"
-              placeholder={`Search comments...`}
-            />
-            <CiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                className="border p-2 rounded w-100"
+                placeholder={`Search comments...`}
+              />
+              <CiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2" />
             </div>
           </div>
+          {selectedProjects.length > 1 && (
+            <div className="mt-7">
+              <button
+                onClick={openModal}
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded"
+              >
+                <BsGraphUpArrow />
+              </button>
+            </div>
+          )}
+
+          {/* Modal for Project Wise Hours */}
+          <ProjectHoursModal
+            isOpen={isModalOpen}
+            onRequestClose={closeModal}
+            projectTotalHours={projectWiseHours}
+            viewer = "Developer"
+          />
         </div>
-        
+
         {/* Table displaying selected project details */}
         <div className="flex items-center justify-center h-400px overflow-y: auto">
           {selectedProjects.length > 0 ? (
@@ -192,6 +241,26 @@ export default function ViewTimeSheet() {
             <p className="text-center text-gray-500 mt-4">
               Please select a project to view completed time sheet.
             </p>
+          )}
+        </div>
+        {/* Display project-wise hours */}
+        <div className="mt-4 flex items-left justify-start">
+          {selectedProjects.length > 0 && (
+            <div className="bg-gray-100 p-4 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                Total Hours
+              </h3>
+              {Object.entries(calculateProjectWiseHours()).map(
+                ([projectId, { projectName, hours }]) => (
+                  <div key={projectId} className="mb-2">
+                    <span className="text-gray-700 font-semibold">
+                      {projectName}:
+                    </span>{" "}
+                    {hours} hours
+                  </div>
+                )
+              )}
+            </div>
           )}
         </div>
       </div>

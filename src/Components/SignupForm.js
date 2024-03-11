@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { SIGNUP } from "../GraphQl/Mutation";
 
 const SignupForm = ({ setIsLoggedIn }) => {
+
   const isValidName = (name) => /^[A-Za-z]+$/.test(name);
   const navigate = useNavigate();
   const [signup, { loading }] = useMutation(SIGNUP);
@@ -59,7 +60,7 @@ const SignupForm = ({ setIsLoggedIn }) => {
     })
       .then((response) => {
         toast.success("Account Created");
-        console.log("Signup Response:", response);
+       // console.log("Signup Response:", response);
         navigate("/login");
       })
       .catch((error) => {
@@ -70,7 +71,6 @@ const SignupForm = ({ setIsLoggedIn }) => {
 
   const handleAccountTypeChange = (event) => {
     setAccountType(event.target.value);
-    //console.log("Account: ", accountType)
   };
 
   return (
