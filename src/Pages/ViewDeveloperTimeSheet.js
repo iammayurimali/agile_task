@@ -254,7 +254,7 @@ export default function ViewDeveloperTimeSheet() {
                     {Object.entries(projectTotalHours).map(
                       ([project, hours]) => (
                         <li key={project} className="text-gray-700">
-                          {`${project}: ${hours} hours`}
+                          <strong>{`${project}:`}</strong> {`${hours} hours`}
                         </li>
                       )
                     )}

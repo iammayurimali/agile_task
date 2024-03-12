@@ -34,7 +34,7 @@ export default function ViewTimeSheet() {
           label: project.projectName,
         }))
       );
-      console.log("Projects: ", selectedProjects);
+      //console.log("Projects: ", selectedProjects);
     }
   }, [data]);
 
